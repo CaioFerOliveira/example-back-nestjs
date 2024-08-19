@@ -10,14 +10,12 @@ export class UsersService {
   constructor(private repository: UsersRepository) { }
 
   public async create(dto: CreateUserDto): Promise<User> {
-    debugger;
-    console.log(dto);
+
     dto.password = await this.hashPassword(dto.password);
-    console.log(dto.password);
+
     const user = new User(dto);
 
     const userExist = await this.userExist(dto.username)
-    console.log(userExist);
     if (userExist) {
       throw new Error("O usuário já está cadastrado");
     }
