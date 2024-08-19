@@ -10,28 +10,34 @@ datasource db {
 model Role {
   id          String     @id @default(uuid())
   description String
+  create_at   DateTime   @default(now())
+  updatedAt   DateTime
   userRole    UserRole[]
 
   @@map("roles")
 }
 
 model User {
-  id       String     @id @default(uuid())
-  username String     @unique
-  password String
-  name     String
-  email    String
-  userRole UserRole[]
+  id        String     @id @default(uuid())
+  username  String     @unique
+  password  String
+  name      String
+  email     String
+  create_at DateTime   @default(now())
+  updatedAt DateTime
+  userRole  UserRole[]
 
   @@map("users")
 }
 
 model UserRole {
-  id      String @id @default(uuid())
-  user_id String
-  role_id String
-  user    User   @relation(fields: [user_id], references: [id])
-  role    Role   @relation(fields: [role_id], references: [id])
+  id        String   @id @default(uuid())
+  user_id   String
+  role_id   String
+  create_at DateTime @default(now())
+  updatedAt DateTime
+  user      User     @relation(fields: [user_id], references: [id])
+  role      Role     @relation(fields: [role_id], references: [id])
 
   @@map("users_roles")
 }

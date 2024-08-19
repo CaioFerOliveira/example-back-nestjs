@@ -1,10 +1,11 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpException, HttpStatus, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpException, Param, Patch, Post, UsePipes } from '@nestjs/common';
 import { Public } from 'src/core/decorator/public.decorator';
 import { Roles } from 'src/core/decorator/roles.decorator';
 import { RoleEnum } from 'src/core/enums/role.enum';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { ZodValidationPipe } from 'src/core/pipes/zod-validation.pipe';
+import { UserDto } from './dto/user.dto';
 import { User } from './entities/user.entity';
+import { USER_DTO_SCHEMA } from './schema/user-dto-zod-schema';
 import { UsersService } from './users.service';
 
 @Controller('users')
@@ -14,7 +15,8 @@ export class UsersController {
   @Post()
   @Public()
   @HttpCode(201)
-  create(@Body() createUserDto: CreateUserDto) {
+  @UsePipes(new ZodValidationPipe(USER_DTO_SCHEMA))
+  create(@Body() createUserDto: UserDto) {
     try {
       return this.usersService.create(createUserDto);
 
@@ -24,6 +26,7 @@ export class UsersController {
   }
 
   @Get()
+  @Public()
   findAll(): Promise<User[]> {
     try {
       return this.usersService.findAll();
@@ -34,8 +37,9 @@ export class UsersController {
   }
 
   @Get(':id')
+  @Public()
   findOne(
-    @Param('id', new ParseIntPipe({ errorHttpStatusCode: HttpStatus.NOT_ACCEPTABLE })) id: string,
+    @Param('id') id: string,
   ) {
     try {
       return this.usersService.findOne(id);
@@ -47,11 +51,11 @@ export class UsersController {
 
   @Patch(':id')
   update(
-    @Param('id', new ParseIntPipe({ errorHttpStatusCode: HttpStatus.NOT_ACCEPTABLE })) id: number,
-    @Body() updateUserDto: UpdateUserDto
+    @Param('id') id: string,
+    @Body() dto: UserDto
   ) {
     try {
-      return this.usersService.update(id, updateUserDto);
+      return this.usersService.update(id, dto);
 
     } catch (error) {
       throw new HttpException(`Error updating user with ${id}`, 500);
@@ -61,11 +65,10 @@ export class UsersController {
   @Roles(RoleEnum.Admin)
   @Delete(':id')
   remove(
-    @Param('id', new ParseIntPipe({ errorHttpStatusCode: HttpStatus.NOT_ACCEPTABLE })) id: number,
-    @Body() updateUserDto: UpdateUserDto
+    @Param('id') id: string,
   ) {
     try {
-      return this.usersService.remove(+id);
+      return this.usersService.remove(id);
 
     } catch (error) {
       throw new HttpException(`Error when removing user with ${id}`, 500);

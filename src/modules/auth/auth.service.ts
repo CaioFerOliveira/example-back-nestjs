@@ -22,7 +22,7 @@ export class AuthService {
 
   private async validateUser(dto: AuthDto): Promise<any> {
     const user = await this.usersService.userExist(dto.username);
-    if (user && this.usersService.comparePasswords(user.password, dto.password)) {
+    if (user && await this.usersService.comparePasswords(user.password, dto.password)) {
       const { password, ...result } = user;
       return result;
     }

@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { UserDto } from './dto/user.dto';
 import { User } from './entities/user.entity';
 import { UsersRepository } from './users.repository';
 
@@ -9,13 +8,14 @@ import { UsersRepository } from './users.repository';
 export class UsersService {
   constructor(private repository: UsersRepository) { }
 
-  public async create(dto: CreateUserDto): Promise<User> {
+  public async create(dto: UserDto): Promise<User> {
 
     dto.password = await this.hashPassword(dto.password);
 
     const user = new User(dto);
 
     const userExist = await this.userExist(dto.username)
+
     if (userExist) {
       throw new Error("O usuário já está cadastrado");
     }
@@ -36,11 +36,11 @@ export class UsersService {
     return await this.repository.findBy(filters);
   }
 
-  public async update(id: number, updateUserDto: UpdateUserDto): Promise<User> {
-    return await this.repository.update(id, updateUserDto);
+  public async update(id: string, dto: UserDto): Promise<User> {
+    return await this.repository.update(id, new User(dto));
   }
 
-  public async remove(id: number): Promise<void> {
+  public async remove(id: string): Promise<void> {
     await this.repository.remove(id);
   }
   public async userExist(username: string): Promise<User> {

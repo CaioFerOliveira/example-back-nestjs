@@ -1,5 +1,6 @@
+import { Auditable } from "src/core/abstracts/auditable";
 import { RoleEnum } from "src/core/enums/role.enum";
-export class User {
+export class User extends Auditable {
     id: string;
     username: string;
     password: string;
@@ -8,6 +9,7 @@ export class User {
     roles?: Array<RoleEnum>
 
     constructor(data: Partial<User> = null) {
+        super();
         if (data) {
             Object.assign(this, {
                 id: data.id,

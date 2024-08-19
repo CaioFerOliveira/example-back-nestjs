@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../database/prisma-service';
-import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 
 @Injectable()
@@ -40,10 +39,20 @@ export class UsersRepository {
         })
     }
 
-    public async update(id: number, updateUserDto: UpdateUserDto): Promise<User> {
-        return new User();
+    public async update(id: string, dto: User): Promise<User> {
+        return await this.prismaService.user.update({
+            data: dto,
+            where: {
+                id,
+            },
+        })
     }
 
-    public async remove(id: number): Promise<void> {
+    public async remove(id: string): Promise<void> {
+        await this.prismaService.user.delete({
+            where: {
+                id
+            }
+        })
     }
 }
