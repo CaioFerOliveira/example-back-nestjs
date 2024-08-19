@@ -26,7 +26,6 @@ export class UsersController {
   }
 
   @Get()
-  @Public()
   findAll(): Promise<User[]> {
     try {
       return this.usersService.findAll();
@@ -37,7 +36,6 @@ export class UsersController {
   }
 
   @Get(':id')
-  @Public()
   findOne(
     @Param('id') id: string,
   ) {

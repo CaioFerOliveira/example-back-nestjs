@@ -1,8 +1,8 @@
 import { IsString, Matches, MinLength } from "class-validator";
 
-export class AuthDto {
+export class LoginDto {
     @IsString()
-    readonly username: string;
+    readonly login: string;
 
     @IsString()
     @MinLength(8, { message: 'O password deve possuir pelo menos 8 caracteres' })

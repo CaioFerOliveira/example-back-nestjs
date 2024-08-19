@@ -1,7 +1,8 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service';
-import { AuthDto } from './dto/auth.dto';
+import { LoginDto } from './dto/auth.dto';
 
 
 @Injectable()
@@ -9,23 +10,23 @@ export class AuthService {
 
   constructor(private usersService: UsersService, private jwtService: JwtService) { }
 
-  public async signIn(dto: AuthDto): Promise<any> {
-    if (this.validateUser(dto)) {
-      throw new UnauthorizedException();
+  public async login(credentials: LoginDto): Promise<any> {
+    const user = await this.usersService.userExist(credentials.login);
+
+    if (!user) {
+      throw new UnauthorizedException('Credenciais incorretas');
     }
-    const user = await this.usersService.userExist(dto.username);
+    const passwordsMacths = await bcrypt.compare(credentials.password, user.password);
 
-    const payload = { sub: user.id, username: user.username }
+    if (!passwordsMacths) {
+      throw new UnauthorizedException('Credenciais incorretas');
+    }
 
-    return { access_token: await this.jwtService.signAsync(payload) };
+    return await this.generateUserToken(user.id);
   }
 
-  private async validateUser(dto: AuthDto): Promise<any> {
-    const user = await this.usersService.userExist(dto.username);
-    if (user && await this.usersService.comparePasswords(user.password, dto.password)) {
-      const { password, ...result } = user;
-      return result;
-    }
-    return null;
+  private async generateUserToken(userId: string) {
+    const acessToken = this.jwtService.sign({ userId })
+    return { acessToken }
   }
 }

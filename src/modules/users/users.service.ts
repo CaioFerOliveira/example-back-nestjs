@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { UserDto } from './dto/user.dto';
 import { User } from './entities/user.entity';
@@ -9,17 +9,14 @@ export class UsersService {
   constructor(private repository: UsersRepository) { }
 
   public async create(dto: UserDto): Promise<User> {
-
-    dto.password = await this.hashPassword(dto.password);
-
     const user = new User(dto);
-
     const userExist = await this.userExist(dto.username)
 
     if (userExist) {
-      throw new Error("O usuário já está cadastrado");
+      throw new BadRequestException("O usuário já está cadastrado");
     }
 
+    user.password = await this.hashPassword(dto.password);
     return await this.repository.create(user);
   }
 
