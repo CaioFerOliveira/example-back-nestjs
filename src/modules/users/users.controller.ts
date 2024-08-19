@@ -1,15 +1,15 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpException, Logger, HttpCode, ParseIntPipe, HttpStatus } from '@nestjs/common';
-import { UsersService } from './users.service';
+import { Body, Controller, Delete, Get, HttpCode, HttpException, HttpStatus, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
+import { Public } from 'src/core/decorator/public.decorator';
+import { Roles } from 'src/core/decorator/roles.decorator';
+import { RoleEnum } from 'src/core/enums/role.enum';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
-import { Roles } from 'src/core/decorator/roles.decorator';
-import { Public } from 'src/core/decorator/public.decorator';
-import { RoleEnum } from 'src/core/enums/role.enum';
+import { UsersService } from './users.service';
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService, private readonly logger: Logger) {}
+  constructor(private readonly usersService: UsersService) { }
 
   @Post()
   @Public()
@@ -19,7 +19,6 @@ export class UsersController {
       return this.usersService.create(createUserDto);
 
     } catch (error) {
-      this.logger.error('Error fetching users', error);
       throw new HttpException('Error creating users', 500);
     }
   }
@@ -30,35 +29,31 @@ export class UsersController {
       return this.usersService.findAll();
 
     } catch (error) {
-      this.logger.error('Error fetching users', error);
       throw new HttpException('Error fetching users', 500);
     }
   }
 
   @Get(':id')
   findOne(
-    @Param('id', new ParseIntPipe({ errorHttpStatusCode: HttpStatus.NOT_ACCEPTABLE }))id: number, 
-    @Body() updateUserDto: UpdateUserDto
-  )  {
+    @Param('id', new ParseIntPipe({ errorHttpStatusCode: HttpStatus.NOT_ACCEPTABLE })) id: string,
+  ) {
     try {
-      return this.usersService.findOne(+id);
+      return this.usersService.findOne(id);
 
     } catch (error) {
-      this.logger.error(`Error fetching user with ${id}` , error);
       throw new HttpException(`Error fetching user with ${id}`, 500);
     }
   }
 
   @Patch(':id')
   update(
-      @Param('id', new ParseIntPipe({ errorHttpStatusCode: HttpStatus.NOT_ACCEPTABLE }))id: number, 
-      @Body() updateUserDto: UpdateUserDto
+    @Param('id', new ParseIntPipe({ errorHttpStatusCode: HttpStatus.NOT_ACCEPTABLE })) id: number,
+    @Body() updateUserDto: UpdateUserDto
   ) {
     try {
       return this.usersService.update(id, updateUserDto);
 
     } catch (error) {
-      this.logger.error(`Error updating user with ${id}` , error);
       throw new HttpException(`Error updating user with ${id}`, 500);
     }
   }
@@ -66,14 +61,13 @@ export class UsersController {
   @Roles(RoleEnum.Admin)
   @Delete(':id')
   remove(
-    @Param('id', new ParseIntPipe({ errorHttpStatusCode: HttpStatus.NOT_ACCEPTABLE }))id: number, 
+    @Param('id', new ParseIntPipe({ errorHttpStatusCode: HttpStatus.NOT_ACCEPTABLE })) id: number,
     @Body() updateUserDto: UpdateUserDto
-  )  {
+  ) {
     try {
       return this.usersService.remove(+id);
 
     } catch (error) {
-      this.logger.error(`Error when removing user with ${id}` , error);
       throw new HttpException(`Error when removing user with ${id}`, 500);
     }
   }

@@ -10,7 +10,7 @@ import { RolesGuard } from './core/guards/role.guard';
 import { ConfigModule } from '@nestjs/config';
 
 @Module({
-  imports: [ConfigModule.forRoot(),UsersModule, AuthModule],
+  imports: [ConfigModule.forRoot({isGlobal: true,}),UsersModule, AuthModule],
   controllers: [AppController],
   providers: [
     AppService, 
