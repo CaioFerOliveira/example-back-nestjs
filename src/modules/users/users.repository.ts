@@ -8,9 +8,7 @@ export class UsersRepository {
     constructor(private prismaService: PrismaService) { }
 
     public async create(data: User): Promise<User> {
-        return await this.prismaService.user.create({
-            data
-        });
+        return await this.prismaService.user.create({ data });
     }
 
     public async findAll(): Promise<User[]> {

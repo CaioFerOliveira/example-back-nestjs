@@ -1,4 +1,5 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpException, Param, Patch, Post, UsePipes } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
 import { Public } from 'src/core/decorator/public.decorator';
 import { Roles } from 'src/core/decorator/roles.decorator';
 import { RoleEnum } from 'src/core/enums/role.enum';
@@ -8,6 +9,7 @@ import { User } from './entities/user.entity';
 import { USER_DTO_SCHEMA } from './schema/user-dto-zod-schema';
 import { UsersService } from './users.service';
 
+@ApiTags('Users')
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) { }

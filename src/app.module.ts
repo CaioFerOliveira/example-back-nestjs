@@ -3,8 +3,6 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { env } from 'process';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { AuthGuard } from './core/guards/auth.guard';
 import { AuthModule } from './modules/auth/auth.module';
 import { AuthService } from './modules/auth/auth.service';
@@ -19,9 +17,8 @@ import { UsersModule } from './modules/users/users.module';
       secret: env.JWT_SECRET,
       signOptions: { expiresIn: '1h' },
     }), UsersModule, AuthModule],
-  controllers: [AppController],
+  controllers: [],
   providers: [
-    AppService,
     AuthService,
     PrismaService,
     {
