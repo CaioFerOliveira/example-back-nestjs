@@ -33,7 +33,7 @@ export class UsersController {
 
   @Get()
   @ApiResponse({ status: 200, description: 'Sucesso' })
-  findAll(): Promise<User[]> {
+  findAll(): Promise<Array<User>> {
     try {
       return this.usersService.findAll();
 

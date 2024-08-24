@@ -11,6 +11,14 @@ export class AuthService {
   constructor(private usersService: UsersService, private jwtService: JwtService) { }
 
   public async login(credentials: LoginDto): Promise<any> {
+
+    const user = await this.validateUser(credentials);
+
+    return await this.generateUserToken(user.id);
+  }
+
+  public async validateUser(credentials: LoginDto) {
+
     const user = await this.usersService.userExist(credentials.login);
 
     if (!user) {
@@ -22,7 +30,7 @@ export class AuthService {
       throw new UnauthorizedException('Credenciais incorretas');
     }
 
-    return await this.generateUserToken(user.id);
+    return user;
   }
 
   private async generateUserToken(userId: string) {

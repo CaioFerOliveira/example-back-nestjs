@@ -29,7 +29,7 @@ export class UsersService {
   }
 
   public async findBy(data: User): Promise<Array<User>> {
-    const filters = this.criarFiltros(data);
+    const filters = this.createFilters(data);
     return await this.repository.findBy(filters);
   }
 
@@ -40,10 +40,12 @@ export class UsersService {
   public async remove(id: string): Promise<void> {
     await this.repository.remove(id);
   }
+
   public async userExist(username: string): Promise<User> {
     return await this.repository.userExist(username);
   }
-  public criarFiltros(data: User): any {
+
+  public createFilters(data: User): any {
     const filters = {
       ...(data.name && { name: data.name }),
       ...(data.email && { email: data.email }),

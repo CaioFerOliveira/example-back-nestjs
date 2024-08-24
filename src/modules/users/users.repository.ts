@@ -34,7 +34,7 @@ export class UsersRepository {
             where: {
                 username
             }
-        })
+        });
     }
 
     public async update(id: string, dto: User): Promise<User> {

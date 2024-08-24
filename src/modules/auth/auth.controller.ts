@@ -1,7 +1,8 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import { Request } from 'express';
 import { Public } from 'src/core/decorator/public.decorator';
-import { AuthGuard } from 'src/core/guards/auth.guard';
+import { LocalGuard } from 'src/core/guards/local.guard';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/auth.dto';
 
@@ -16,9 +17,10 @@ export class AuthController {
     return this.authService.login(credentials);
   }
 
-  @UseGuards(AuthGuard)
-  @Get('profile')
-  getProfile() {
+  @UseGuards(LocalGuard)
+  @Get('status')
+  status(@Req() request: Request) {
+    request.user
     return "Method here";
   }
 }

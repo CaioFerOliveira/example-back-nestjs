@@ -7,7 +7,7 @@ export abstract class Auditable {
         type: Number,
     })
     @IsNumber()
-    public registeredBy?: number
+    public createdBy: number
 
     @ApiProperty({
         description: 'Data em que usuário que realizou a operação',
