@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
+import { BusinessException } from 'src/core/exceptions/business-exception';
 import { UserDto } from './dto/user.dto';
 import { User } from './entities/user.entity';
 import { UsersRepository } from './users.repository';
@@ -28,7 +29,8 @@ export class UsersService {
   }
 
   public async findOne(id: string): Promise<User> {
-    return await this.repository.findOne(id);
+    let user = await this.findOne(id);
+    return user;
   }
 
   public async findBy(data: User): Promise<Array<User>> {
@@ -36,11 +38,22 @@ export class UsersService {
     return await this.repository.findBy(filters);
   }
 
-  public async update(id: string, dto: UserDto): Promise<User> {
-    return await this.repository.update(id, new User(dto));
+  public async update(id: string, dto: UserDto, req: any): Promise<User> {
+    let user = await this.findOne(id);
+
+    const userLogged = req.user;
+    Object.assign(user, dto);
+    user.updatedBy = userLogged;
+    user.updatedAt = new Date();
+
+    return await this.repository.update(id, user);
   }
 
   public async remove(id: string): Promise<void> {
+    const user = await this.findOne(id);
+    if (!user) {
+      throw new BusinessException("Usuário não encontrado")
+    }
     await this.repository.remove(id);
   }
 
