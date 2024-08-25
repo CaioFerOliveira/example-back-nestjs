@@ -1,3 +1,6 @@
 {
-    "recommendations": ["vscode-icons-team.vscode-icons", "esbenp.prettier-vscode", "Prisma.prisma"]
+  "recommendations": [
+    "vscode-icons-team.vscode-icons",
+    "esbenp.prettier-vscode"
+  ]
 }

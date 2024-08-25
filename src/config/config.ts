@@ -1,9 +1,11 @@
 export default () => ({
     jwt: {
         secret: process.env.JWT_SECRET || 'teste',
-        expiresIn: process.env.JWT_TOKEN_EXPIRATION && process.env.JWT_TOKEN_EXPIRATION !== "0"
-            ? process.env.JWT_TOKEN_EXPIRATION
-            : "1h",
+        signOptions: {
+            expiresIn: process.env.JWT_TOKEN_EXPIRATION && process.env.JWT_TOKEN_EXPIRATION !== "0"
+                ? process.env.JWT_TOKEN_EXPIRATION
+                : "1h",
+        }
     },
     init: process.env.INIT || 'Default'
     // database: {

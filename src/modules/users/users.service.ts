@@ -21,11 +21,13 @@ export class UsersService {
       user.createdBy = userLogged.userId;
     }
     user.password = await this.hashPassword(dto.password);
-    return await this.repository.create(user);
+    await this.repository.create(user);
+    return;
   }
 
   public async findAll(): Promise<Array<User>> {
-    return await this.repository.findAll();
+    await this.repository.findAll();
+    return;
   }
 
   public async findOne(id: string): Promise<User> {
@@ -35,7 +37,8 @@ export class UsersService {
 
   public async findBy(data: User): Promise<Array<User>> {
     const filters = this.createFilters(data);
-    return await this.repository.findBy(filters);
+    await this.repository.findBy(filters);
+    return;
   }
 
   public async update(id: string, dto: UserDto, req: any): Promise<User> {
@@ -46,7 +49,8 @@ export class UsersService {
     user.updatedBy = userLogged;
     user.updatedAt = new Date();
 
-    return await this.repository.update(id, user);
+    await this.repository.update(id, user);
+    return;
   }
 
   public async remove(id: string): Promise<void> {
@@ -58,7 +62,8 @@ export class UsersService {
   }
 
   public async userExist(username: string): Promise<User> {
-    return await this.repository.userExist(username);
+    await this.repository.userExist(username);
+    return;
   }
 
   public createFilters(data: User): any {

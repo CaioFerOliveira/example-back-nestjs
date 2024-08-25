@@ -22,7 +22,7 @@
 
 import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
-import { JwtModule } from "@nestjs/jwt";
+import { JwtModule, JwtSignOptions } from "@nestjs/jwt";
 import config from "./config/config";
 import { AuthModule } from "./modules/auth/auth.module";
 import { AuthService } from "./modules/auth/auth.service";
@@ -34,12 +34,12 @@ import { UsersModule } from "./modules/users/users.module";
     ConfigModule.forRoot({ isGlobal: true, load: [config] }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
-      useFactory: async (config) => ({
-        secret: config.get('jwt.secret'),
-        signOptions: config.get('jwt.expiresIn'),
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => ({
+        secret: configService.get<string>('jwt.secret'),
+        signOptions: configService.get<JwtSignOptions>('jwt.signOptions'),
       }),
       global: true,
-      inject: [ConfigService],
     }), UsersModule, AuthModule],
   controllers: [],
   providers: [
