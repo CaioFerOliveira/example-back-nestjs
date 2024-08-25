@@ -1,7 +1,9 @@
 export default () => ({
     jwt: {
-        secret: process.env.JWT_SECRET,
-        expiresIn: '1h'
+        secret: process.env.JWT_SECRET ?? 'teste',
+        expiresIn: process.env.JWT_TOKEN_EXPIRATION && process.env.JWT_TOKEN_EXPIRATION !== "0"
+            ? process.env.JWT_TOKEN_EXPIRATION
+            : "1h",
     },
     database: {
         DATABASE_URL: process.env.DATABASE_URL ?? "postgresql://localhost:5442/postgres",

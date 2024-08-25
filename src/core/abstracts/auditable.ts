@@ -1,13 +1,13 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsDate, IsNumber } from "class-validator";
+import { IsDate, IsString } from "class-validator";
 
 export abstract class Auditable {
     @ApiProperty({
         description: 'Identificador do usuário que realizou a operação',
-        type: Number,
+        type: String,
     })
-    @IsNumber()
-    public createdBy: number
+    @IsString()
+    public createdBy: string
 
     @ApiProperty({
         description: 'Data em que usuário que realizou a operação',
@@ -18,10 +18,10 @@ export abstract class Auditable {
 
     @ApiProperty({
         description: 'Identificador do usuário que realizou a alteração',
-        type: Number,
+        type: String,
     })
-    @IsNumber()
-    public updatedBy?: number;
+    @IsString()
+    public updatedBy?: string;
 
     @ApiProperty({
         description: 'Data em que usuário que realizou a alteração',

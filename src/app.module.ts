@@ -1,7 +1,9 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_FILTER } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { env } from 'process';
+import { AllExceptionFilter } from './core/filters/exception.filter';
 import { AuthModule } from './modules/auth/auth.module';
 import { AuthService } from './modules/auth/auth.service';
 import { PrismaService } from './modules/database/prisma-service';
@@ -20,6 +22,10 @@ import { UsersModule } from './modules/users/users.module';
   providers: [
     AuthService,
     PrismaService,
+    {
+      provide: APP_FILTER,
+      useClass: AllExceptionFilter,
+    },
   ],
 })
 export class AppModule { }
@@ -36,17 +42,11 @@ export class AppModule { }
 //       }),
 //       global: true,
 //       inject: [ConfigService],
-//       signOptions: { expiresIn: '1h' },
 //     }), UsersModule, AuthModule],
-//   controllers: [AppController],
+//   controllers: [],
 //   providers: [
-//     AppService,
 //     AuthService,
 //     PrismaService,
-//     {
-//       provide: APP_GUARD,
-//       useClass: AuthGuard,
-//     }
 //   ],
 // })
 // export class AppModule { }
