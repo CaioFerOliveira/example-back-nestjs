@@ -3,11 +3,11 @@ import { IsString, Matches, MinLength } from "class-validator";
 
 export class LoginDto {
     @ApiProperty({
-        description: 'Login enviado pelo usuário',
+        description: 'Username enviado pelo usuário',
         type: String,
     })
     @IsString()
-    readonly login: string;
+    readonly username: string;
 
     @ApiProperty({
         description: 'Password enviado pelo usuário',
@@ -21,7 +21,7 @@ export class LoginDto {
     constructor(data: Partial<LoginDto>) {
         if (data) {
             Object.assign(this, {
-                login: data.login,
+                username: data.username,
                 password: data.password
             })
         }

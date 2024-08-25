@@ -36,5 +36,7 @@ export class UserDto {
         type: Array<RoleEnum>,
     })
     @IsArray()
-    readonly role?: Array<RoleEnum>
+    readonly roles?: Array<RoleEnum>
+
+
 }

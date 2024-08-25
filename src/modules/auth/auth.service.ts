@@ -19,7 +19,7 @@ export class AuthService {
 
   public async validateUser(credentials: LoginDto) {
 
-    const user = await this.usersService.userExist(credentials.login);
+    const user = await this.usersService.userExist(credentials.username);
 
     if (!user) {
       throw new UnauthorizedException('Credenciais incorretas');

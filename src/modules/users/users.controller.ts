@@ -1,8 +1,9 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpException, Param, Patch, Post, UsePipes } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, HttpException, Param, Patch, Post, Req, UseGuards, UsePipes } from '@nestjs/common';
 import { ApiHeader, ApiResponse } from '@nestjs/swagger';
-import { Public } from 'src/core/decorator/public.decorator';
+import { Request } from 'express';
 import { Roles } from 'src/core/decorator/roles.decorator';
 import { RoleEnum } from 'src/core/enums/role.enum';
+import { JwtAuthGuard } from 'src/core/guards/jwt.guard';
 import { ZodValidationPipe } from 'src/core/pipes/zod-validation.pipe';
 import { UserDto } from './dto/user.dto';
 import { User } from './entities/user.entity';
@@ -18,13 +19,13 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) { }
 
   @Post()
-  @Public()
   @HttpCode(201)
   @ApiResponse({ status: 201, description: 'Usuário criado com sucesso' })
   @UsePipes(new ZodValidationPipe(USER_DTO_SCHEMA))
-  create(@Body() createUserDto: UserDto) {
+  @UseGuards(JwtAuthGuard)
+  create(@Req() request: Request, @Body() createUserDto: UserDto) {
     try {
-      return this.usersService.create(createUserDto);
+      return this.usersService.create(createUserDto, request.user);
 
     } catch (error) {
       throw new HttpException('Error creating user', 500);

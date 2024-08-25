@@ -25,9 +25,9 @@ model User {
   password  String
   name      String
   email     String
-  createdBy Int
+  createdBy String
   createdAt DateTime   @default(now())
-  updateBy  Int?
+  updateBy  String?
   updatedAt DateTime?
   UserRole  UserRole[]
 

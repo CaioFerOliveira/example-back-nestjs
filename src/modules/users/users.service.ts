@@ -8,14 +8,17 @@ import { UsersRepository } from './users.repository';
 export class UsersService {
   constructor(private repository: UsersRepository) { }
 
-  public async create(dto: UserDto): Promise<User> {
-    const user = new User(dto);
+  public async create(dto: UserDto, userLogged: any): Promise<User> {
     const userExist = await this.userExist(dto.username)
 
     if (userExist) {
       throw new BadRequestException("O usuário já está cadastrado");
     }
 
+    const user = new User(dto);
+    if (userLogged) {
+      user.createdBy = userLogged.userId;
+    }
     user.password = await this.hashPassword(dto.password);
     return await this.repository.create(user);
   }
