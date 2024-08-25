@@ -1,25 +1,3 @@
-
-// @Module({
-//   imports: [
-//     ConfigModule.forRoot({ isGlobal: true, }),
-//     JwtModule.register({
-//       global: true,
-//       secret: env.JWT_SECRET,
-//       signOptions: { expiresIn: '1h' },
-//     })
-//     , UsersModule, AuthModule],
-//   controllers: [],
-//   providers: [
-//     AuthService,
-//     PrismaService,
-//     {
-//       provide: APP_FILTER,
-//       useClass: AllExceptionFilter,
-//     },
-//   ],
-// })
-// export class AppModule { }
-
 import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { JwtModule, JwtSignOptions } from "@nestjs/jwt";
