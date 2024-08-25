@@ -14,7 +14,7 @@ export class AuthService {
 
     const user = await this.validateUser(credentials);
 
-    return await this.generateUserToken(user.id);
+    return await this.generateToken(user.id);
   }
 
   public async validateUser(credentials: LoginDto) {
@@ -33,8 +33,9 @@ export class AuthService {
     return user;
   }
 
-  private async generateUserToken(userId: string) {
-    const acessToken = this.jwtService.sign({ userId })
+  private async generateToken(userId: string) {
+    //TODO ADICIONAR AS PERMISSÕES AO PAYLOAD DO JWT
+    const acessToken = this.jwtService.sign({ userId });
     return { acessToken }
   }
 }

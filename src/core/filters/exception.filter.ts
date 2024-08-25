@@ -1,5 +1,6 @@
-import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
+import { ArgumentsHost, Catch, ExceptionFilter, HttpException } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
+import { BusinessException } from '../exceptions/business-exception';
 
 
 @Catch()
@@ -10,24 +11,20 @@ export class AllExceptionFilter implements ExceptionFilter {
         const { httpAdapter } = this.httpAdapterHost;
 
         const ctx = host.switchToHttp();
+        const statusCode = exception.getStatus();
 
-        const httpStatus =
-            exception instanceof HttpException
-                ? exception.getStatus()
-                : HttpStatus.INTERNAL_SERVER_ERROR
-
-        const message = exception instanceof HttpException
+        const message = exception instanceof BusinessException
             ? exception.message
-            : "Erro interno! Caso persista contate o suporte"
+            : "Houve um problema com sua requisição. Caso persista contate o suporte"
 
 
         const responseBody = {
-            statusCode: httpStatus,
+            statusCode,
             timestamp: new Date().toISOString(),
             path: httpAdapter.getRequestUrl(ctx.getRequest()),
             message: message
         };
 
-        httpAdapter.reply(ctx.getResponse(), responseBody, httpStatus);
+        httpAdapter.reply(ctx.getResponse(), responseBody, statusCode);
     }
 }
