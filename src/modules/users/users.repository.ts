@@ -14,11 +14,12 @@ export class UsersRepository {
     }
 
     public async findAll(): Promise<Array<User>> {
-        return await this.knex.select().table('users');
+        return await this.knex.table('users');
     }
 
     public async findOne(id: string): Promise<User> {
-        return await this.knex.select().table('users').where({ id: id }).select().first();
+        const teste = await this.knex.table("users").first().where('id', parseInt(id));
+        return teste;
     }
 
     public async findBy(filters: User): Promise<void> {
@@ -42,6 +43,6 @@ export class UsersRepository {
     }
 
     public async remove(id: string): Promise<void> {
-        await this.knex.select().table('users').where({ id: id }).delete();
+        await this.knex.select().table('users').where('id', id).del();
     }
 }

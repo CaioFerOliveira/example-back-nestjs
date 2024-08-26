@@ -1,6 +1,7 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { BusinessException } from 'src/core/exceptions/business-exception';
 import { UsersService } from '../users/users.service';
 import { LoginDto } from './dto/auth.dto';
 
@@ -21,12 +22,12 @@ export class AuthService {
     const user = await this.usersService.userExist(credentials.username);
 
     if (!user) {
-      throw new UnauthorizedException('Credenciais incorretas');
+      throw new BusinessException('Credenciais incorretas');
     }
     const passwordsMacths = await bcrypt.compare(credentials.password, user.password);
 
     if (!passwordsMacths) {
-      throw new UnauthorizedException('Credenciais incorretas');
+      throw new BusinessException('Credenciais incorretas');
     }
 
     return user;

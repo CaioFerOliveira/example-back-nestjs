@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { BusinessException } from 'src/core/exceptions/business-exception';
+import { UserResponseDto } from './dto/user-dto-response';
 import { UserDto } from './dto/user.dto';
 import { User } from './entities/user.entity';
 import { UsersRepository } from './users.repository';
@@ -22,8 +23,22 @@ export class UsersService {
     return await this.repository.create(user);
   }
 
-  public async findAll(): Promise<Array<User>> {
-    return await this.repository.findAll();
+  public async findById(id: string): Promise<UserResponseDto> {
+    console.log(id)
+    if (!id) {
+      throw new BusinessException("O id informado é inválido");
+    }
+    const user = await this.findOne(id);
+    return new UserResponseDto(user);
+  }
+
+  public async findAll(): Promise<Array<UserResponseDto>> {
+    let dtos: Array<UserResponseDto> = [];
+    let users = await this.repository.findAll();
+    users.map((user: User) => {
+      dtos.push(new UserResponseDto(user));
+    })
+    return dtos;
   }
 
   public async findOne(id: string): Promise<User> {

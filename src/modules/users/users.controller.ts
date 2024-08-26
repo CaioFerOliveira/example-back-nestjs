@@ -6,8 +6,8 @@ import { RoleEnum } from 'src/core/enums/role.enum';
 import { BusinessException } from 'src/core/exceptions/business-exception';
 import { JwtAuthGuard } from 'src/core/guards/jwt.guard';
 import { ZodValidationPipe } from 'src/core/pipes/zod-validation.pipe';
+import { UserResponseDto } from './dto/user-dto-response';
 import { UserDto } from './dto/user.dto';
-import { User } from './entities/user.entity';
 import { USER_DTO_SCHEMA } from './schema/user-dto-zod-schema';
 import { UsersService } from './users.service';
 
@@ -35,7 +35,7 @@ export class UsersController {
   @Get()
   @ApiResponse({ status: 200, description: 'Sucesso' })
   @UseGuards(JwtAuthGuard)
-  findAll(): Promise<Array<User>> {
+  findAll(): Promise<Array<UserResponseDto>> {
     try {
       return this.usersService.findAll();
 
@@ -44,17 +44,17 @@ export class UsersController {
     }
   }
 
-  @Get(':id')
+  @Get('/:id')
   @ApiResponse({ status: 200, description: 'Sucesso ao buscar usuário' })
   @UseGuards(JwtAuthGuard)
   findOne(
-    @Param('id') id: string,
+    @Param() params: any,
   ) {
     try {
-      return this.usersService.findOne(id);
+      return this.usersService.findById(params.id);
 
     } catch (error) {
-      throw new BusinessException(`Error fetching user with ${id}`);
+      throw new BusinessException(error.message);
     }
   }
 
