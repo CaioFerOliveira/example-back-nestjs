@@ -9,16 +9,16 @@ export class UsersRepository {
         @InjectConnection() private readonly knex: Knex
     ) { }
 
-    public async create(data: User): Promise<void> {
-        return await this.knex.table('users').insert({ data });
+    public async create(data: User): Promise<User> {
+        return await this.knex.select().table('users').insert({ username: data.username, password: data.password, name: data.name, email: data.email });
     }
 
-    public async findAll(): Promise<void> {
-        // return await 
+    public async findAll(): Promise<Array<User>> {
+        return await this.knex.select().table('users');
     }
 
     public async findOne(id: string): Promise<User> {
-        return await this.knex.table('user').where('id').first();
+        return await this.knex.select().table('users').where({ id: id }).select().first();
     }
 
     public async findBy(filters: User): Promise<void> {
@@ -27,12 +27,9 @@ export class UsersRepository {
         // });
     }
 
-    public async userExist(username: string): Promise<void> {
-        // return await this.prismaService.user.findFirst({
-        //     where: {
-        //         username
-        //     }
-        // });
+    public async userExist(username: string): Promise<User> {
+        const user = await this.knex.select().table('users').where({ username: username }).first();
+        return user;
     }
 
     public async update(id: string, dto: User): Promise<void> {
@@ -45,10 +42,6 @@ export class UsersRepository {
     }
 
     public async remove(id: string): Promise<void> {
-        // await this.prismaService.user.delete({
-        //     where: {
-        //         id
-        //     }
-        // })
+        await this.knex.select().table('users').where({ id: id }).delete();
     }
 }

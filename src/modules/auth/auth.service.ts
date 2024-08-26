@@ -18,7 +18,6 @@ export class AuthService {
   }
 
   public async validateUser(credentials: LoginDto) {
-
     const user = await this.usersService.userExist(credentials.username);
 
     if (!user) {

@@ -11,23 +11,19 @@ export class UsersService {
 
   public async create(dto: UserDto): Promise<User> {
     const userExist = await this.userExist(dto.username)
-
     if (userExist) {
       throw new BusinessException("O usuário já está cadastrado");
     }
-
     const user = new User(dto);
     // if (userLogged) {
     //   user.createdBy = userLogged.userId;
     // }
     user.password = await this.hashPassword(dto.password);
-    await this.repository.create(user);
-    return;
+    return await this.repository.create(user);
   }
 
   public async findAll(): Promise<Array<User>> {
-    await this.repository.findAll();
-    return;
+    return await this.repository.findAll();
   }
 
   public async findOne(id: string): Promise<User> {
@@ -62,8 +58,7 @@ export class UsersService {
   }
 
   public async userExist(username: string): Promise<User> {
-    await this.repository.userExist(username);
-    return;
+    return await this.repository.userExist(username);
   }
 
   public createFilters(data: User): any {
