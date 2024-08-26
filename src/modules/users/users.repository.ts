@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import knex from 'knex';
 import { User } from './entities/user.entity';
 
 @Injectable()
@@ -7,19 +8,15 @@ export class UsersRepository {
     constructor() { }
 
     public async create(data: User): Promise<void> {
-        // return await this.prismaService.user.create({ data });
+        return await knex('users').insert({ data });
     }
 
     public async findAll(): Promise<void> {
-        // return await this.prismaService.user.findMany();
+        // return await 
     }
 
-    public async findOne(id: string): Promise<void> {
-        // return await this.prismaService.user.findUnique({
-        //     where: {
-        //         id
-        //     }
-        // });
+    public async findOne(id: string): Promise<User> {
+        return await knex('user').where('id').first();
     }
 
     public async findBy(filters: User): Promise<void> {

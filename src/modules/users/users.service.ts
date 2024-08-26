@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { BusinessException } from 'src/core/exceptions/business-exception';
 import { UserDto } from './dto/user.dto';
@@ -9,17 +9,17 @@ import { UsersRepository } from './users.repository';
 export class UsersService {
   constructor(private repository: UsersRepository) { }
 
-  public async create(dto: UserDto, userLogged: any): Promise<User> {
+  public async create(dto: UserDto): Promise<User> {
     const userExist = await this.userExist(dto.username)
 
     if (userExist) {
-      throw new BadRequestException("O usuário já está cadastrado");
+      throw new BusinessException("O usuário já está cadastrado");
     }
 
     const user = new User(dto);
-    if (userLogged) {
-      user.createdBy = userLogged.userId;
-    }
+    // if (userLogged) {
+    //   user.createdBy = userLogged.userId;
+    // }
     user.password = await this.hashPassword(dto.password);
     await this.repository.create(user);
     return;
@@ -31,7 +31,7 @@ export class UsersService {
   }
 
   public async findOne(id: string): Promise<User> {
-    let user = await this.findOne(id);
+    let user = await this.repository.findOne(id);
     return user;
   }
 

@@ -33,7 +33,7 @@ export class AuthService {
     return user;
   }
 
-  private async generateToken(userId: string) {
+  private async generateToken(userId: number) {
     //TODO ADICIONAR AS PERMISSÕES AO PAYLOAD DO JWT
     const acessToken = this.jwtService.sign({ userId });
     return { acessToken }

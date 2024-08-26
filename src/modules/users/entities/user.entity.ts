@@ -8,7 +8,7 @@ export class User extends Auditable {
         type: String,
     })
     @IsString()
-    id: string;
+    id: number;
 
     @ApiProperty({
         description: 'Login do usuário',

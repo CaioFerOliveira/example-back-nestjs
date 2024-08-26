@@ -6,5 +6,14 @@ export default () => ({
                 ? process.env.JWT_TOKEN_EXPIRATION
                 : "1h",
         }
+    },
+    db: {
+        dialect: process.env.DIALECT || 'postgres',
+        user: process.env.DATABASE_USER || 'docker',
+        password: process.env.DATABASE_PASSWORD || 'docker',
+        host: process.env.HOST || 'localhost',
+        port: process.env.PORT || '5442',
+        database: process.env.DATABASE || 'postegres',
+        url: process.env.DATABASE_URL || "postgresql://docker:docker@localhost:5442/postgres?schema=public"
     }
 })

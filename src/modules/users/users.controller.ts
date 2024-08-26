@@ -1,11 +1,13 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Req, UseGuards, UsePipes } from '@nestjs/common';
 import { ApiHeader, ApiResponse } from '@nestjs/swagger';
 import { Request } from 'express';
+import { Public } from 'src/core/decorator/public.decorator';
 import { Roles } from 'src/core/decorator/roles.decorator';
 import { RoleEnum } from 'src/core/enums/role.enum';
 import { BusinessException } from 'src/core/exceptions/business-exception';
 import { JwtAuthGuard } from 'src/core/guards/jwt.guard';
 import { ZodValidationPipe } from 'src/core/pipes/zod-validation.pipe';
+import { LocalStrategy } from '../auth/strategies/local.strategy';
 import { UserDto } from './dto/user.dto';
 import { User } from './entities/user.entity';
 import { USER_DTO_SCHEMA } from './schema/user-dto-zod-schema';
@@ -23,10 +25,10 @@ export class UsersController {
   @HttpCode(201)
   @ApiResponse({ status: 201, description: 'Usuário criado com sucesso' })
   @UsePipes(new ZodValidationPipe(USER_DTO_SCHEMA))
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(LocalStrategy)
   create(@Req() request: Request, @Body() createUserDto: UserDto) {
     try {
-      return this.usersService.create(createUserDto, request.user);
+      return this.usersService.create(createUserDto);
 
     } catch (error) {
       throw new BusinessException('Error creating user');
@@ -47,7 +49,7 @@ export class UsersController {
 
   @Get(':id')
   @ApiResponse({ status: 200, description: 'Sucesso ao buscar usuário' })
-  @UseGuards(JwtAuthGuard)
+  @Public()
   findOne(
     @Param('id') id: string,
   ) {
