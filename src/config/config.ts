@@ -8,7 +8,7 @@ export default () => ({
         }
     },
     db: {
-        dialect: process.env.DIALECT || 'postgres',
+        client: process.env.CLIENT || 'pg',
         user: process.env.DATABASE_USER || 'docker',
         password: process.env.DATABASE_PASSWORD || 'docker',
         host: process.env.HOST || 'localhost',

@@ -15,7 +15,16 @@ import { UsersModule } from "./modules/users/users.module";
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: async (configservice: ConfigService) => ({
-        config: configservice.get<any>('db'),
+        config: {
+          client: configservice.get<string>('db.client'),
+          connection: {
+            connectionString: configservice.get<string>('db.url')
+          },
+          migrations: {
+            directory: '../knex/migrations',
+
+          }
+        }
       })
     }),
     JwtModule.registerAsync({
@@ -32,4 +41,5 @@ import { UsersModule } from "./modules/users/users.module";
     AuthService,
   ],
 })
-export class AppModule { }
+export class AppModule {
+}

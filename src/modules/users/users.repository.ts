@@ -1,14 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import knex from 'knex';
+import { InjectConnection, Knex } from 'nestjs-knex';
 import { User } from './entities/user.entity';
 
 @Injectable()
 export class UsersRepository {
 
-    constructor() { }
+    constructor(
+        @InjectConnection() private readonly knex: Knex
+    ) { }
 
     public async create(data: User): Promise<void> {
-        return await knex('users').insert({ data });
+        return await this.knex.table('users').insert({ data });
     }
 
     public async findAll(): Promise<void> {
@@ -16,7 +18,7 @@ export class UsersRepository {
     }
 
     public async findOne(id: string): Promise<User> {
-        return await knex('user').where('id').first();
+        return await this.knex.table('user').where('id').first();
     }
 
     public async findBy(filters: User): Promise<void> {
