@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Req, UseGuards, UsePipes } from '@nestjs/common';
-import { ApiHeader, ApiResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { Request } from 'express';
 import { Roles } from 'src/core/decorator/roles.decorator';
 import { RoleEnum } from 'src/core/enums/role.enum';
@@ -11,11 +11,12 @@ import { UserDto } from './dto/user.dto';
 import { USER_DTO_SCHEMA } from './schema/user-dto-zod-schema';
 import { UsersService } from './users.service';
 
-@ApiHeader({
-  name: 'Users',
-  description: 'Controller de usuários',
-})
+// @ApiHeader({
+//   name: 'Users',
+//   description: 'Controller de usuários',
+// })
 @Controller('users')
+@ApiBearerAuth()
 export class UsersController {
   constructor(private readonly usersService: UsersService) { }
 
@@ -48,10 +49,10 @@ export class UsersController {
   @ApiResponse({ status: 200, description: 'Sucesso ao buscar usuário' })
   @UseGuards(JwtAuthGuard)
   findOne(
-    @Param() params: any,
+    @Param('id') id: string,
   ) {
     try {
-      return this.usersService.findById(params.id);
+      return this.usersService.findById(id);
 
     } catch (error) {
       throw new BusinessException(error.message);

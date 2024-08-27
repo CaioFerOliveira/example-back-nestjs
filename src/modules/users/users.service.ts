@@ -16,9 +16,6 @@ export class UsersService {
       throw new BusinessException("O usuário já está cadastrado");
     }
     const user = new User(dto);
-    // if (userLogged) {
-    //   user.createdBy = userLogged.userId;
-    // }
     user.password = await this.hashPassword(dto.password);
     return await this.repository.create(user);
   }
