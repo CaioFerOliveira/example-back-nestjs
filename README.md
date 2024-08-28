@@ -29,7 +29,9 @@
 # - Pré requisitos <a name="pre-requisitos"></a>
 
 - Node 20.x.0
+  (documentação do nestjs: https://docs.nestjs.com/cli/overview)
 - NPM 10.x.0
+- Docker desktop
 
 ## Instalando
 
@@ -38,31 +40,196 @@
 ```bash
 $ npm i @nestjs/cli
 ```
--No mesmo terminal execute o comando: 
+
+-No mesmo terminal execute o comando:
 
 ```bash
 $ npx nest new <nome_do_projeto>
 ```
+
 - Ao aparecer a mensagem: "_Which package manager would you ❤️ to use?_"
 - Aperte enter para selecionar o **npm**, que irá criar a estrutura padrão de um projeto nestJs e instalar as dependências padrões.
 
+### Removendo alguns arquivos desnecessários:
+
+- Entre no diretório criado pelo comano acima e exclua os arquivos **app.controller.ts** e **app.service.ts**, remova-os também do arquivo **app.module.ts**, que estará como abaixo:
+
+```ts
+import { Module } from '@nestjs/common';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+
+@Module({
+  imports: [],
+  controllers: [AppController],
+  providers: [AppService],
+})
+export class AppModule {}
+```
+
+```ts
+import { Module } from '@nestjs/common';
+
+@Module({
+  imports: [],
+  controllers: [],
+  providers: [],
+})
+export class AppModule {}
+```
+
+- É neste arquivo, junto ao **main.ts** que as configurações globais da aplicação serão configuradas.
+
+### Adicionando o primeiro modulo ao novo projeto
+
+- No diretório '/src' crie um pasta chamada modules, e em seguida executa o comando:
+
+```sh
+nest g resource modules/users
+```
+
+- A CLI irá criar um estrutura padrão de CRUD, com o path passado, no exemplo 'modules/users'
+
+- Observe que após a execução do comando o arquivo **app.modules.ts** foi alterado:
+
+```ts
+import { Module } from '@nestjs/common';
+import { UsersModule } from './modules/users/users.module';
+
+@Module({
+  imports: [UsersModule],
+  controllers: [],
+  providers: [],
+})
+export class AppModule {}
+```
+
+- O UsersModule foi adicionado automaticamente aos imports, isso possibilita que o conteúdo declarado no **UsersModule** seja disponibilizado e utilzado por outros módulos da aplicação.
+
+- O nest não utiliza a Estrutura MVC por default, mas é recomendado fortemente a criação de uma classe repository em todos modulos por exemplo:
+
+```ts
+import { Injectable } from '@nestjs/common';
+import { User } from './entities/user.entity';
+
+@Injectable()
+export class UsersRepository {
+  constructor() {}
+
+  public async create(data: User): Promise<User> {}
+
+  public async findAll(): Promise<Array<User>> {}
+
+  public async findOne(id: string): Promise<User> {}
+
+  public async findBy(filters: User): Promise<void> {}
+
+  public async update(id: string, dto: User): Promise<void> {}
+
+  public async remove(id: string): Promise<void> {}
+}
+```
+
+- Como a classe UserRepository não foi criada utilizando o CLI do nest é necessário atualizar o **user.module.ts**
+
+```ts
+import { Module } from '@nestjs/common';
+import { UsersController } from './users.controller';
+import { UsersRepository } from './users.repository';
+import { UsersService } from './users.service';
+
+@Module({
+  controllers: [UsersController],
+  providers: [UsersService, UsersRepository],
+  exports: [UsersService],
+})
+export class UsersModule {}
+```
+
+- Para que seja possível utiliza-lo na camada de serviço, é preciso injetar a dependência do UserRepository, adicionando ao construtor da classe de serviço da seguinte forma:
+
+```ts
+import { Injectable } from '@nestjs/common';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+
+@Injectable()
+export class UsersService {
+  constructor(private repository: UsersRepository) {}
+  create(createUserDto: CreateUserDto) {
+    return 'This action adds a new user';
+  }
+
+  findAll() {
+    return `This action returns all users`;
+  }
+
+  findOne(id: number) {
+    return `This action returns a #${id} user`;
+  }
+
+  update(id: number, updateUserDto: UpdateUserDto) {
+    return `This action updates a #${id} user`;
+  }
+
+  remove(id: number) {
+    return `This action removes a #${id} user`;
+  }
+}
+```
+
+- O documentação do nestJs disponibiliza um grando quantidade de comandos utilitários para geração de classes no padrão nest utilizando seu cli aqui o link para mais comandos:
+
+https://docs.nestjs.com/cli/usages
+
 ## Configurando o projeto
+
+### Criando a imagem do banco
+
+- Na raiz do seu projeto crie um arquivo docker-compose.yml, nele copie o código abaixo
+
+```sh
+services:
+  postgres:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: ${POSTGRES_USER:-docker}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-docker}
+    ports:
+      - '5442:5432'
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+```
+
+- Em um **shell** na raiz do projeto execute o comando a seguir, que irá iniciar um conteiner com um banco de dados.
+
+```sh
+docker-compose up -d
+```
+
 - Crie uma pasta chamada core no diretório '/src' do projeto, nela ficaram as classes utilitárias e de configuração do projeto.
 
-### Validações de classes 
+### Validações de classes
 
-- Executa o comando em um shell aberto na pasta do seu projeto: 
+- Executa o comando em um shell aberto na pasta do seu projeto:
 
 ```bash
 $ npm i --save class-validator class-transformer
 ```
 
-- Este comando irá instalar a biblioteca que utilizaremos para validar o objetos recebidos; 
+- Este comando irá instalar a biblioteca que utilizaremos para validar o objetos recebidos;
 
-- No diretório '/src/core' crie um pasta **pipes** e nesta pasta crie um arquivo chamado: **validation.pipe.ts** e copie o código a seguir: 
+- No diretório '/src/core' crie um pasta **pipes** e nesta pasta crie um arquivo chamado: **validation.pipe.ts** e copie o código a seguir:
 
 ```ts
-import { PipeTransform, Injectable, ArgumentMetadata, BadRequestException } from '@nestjs/common';
+import {
+  PipeTransform,
+  Injectable,
+  ArgumentMetadata,
+  BadRequestException,
+} from '@nestjs/common';
 import { validate } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
 
@@ -92,7 +259,8 @@ export class ValidationPipe implements PipeTransform<any> {
 ```ts
 app.useGlobalPipes(new ValidationPipe());
 ```
-O arquivo **main.ts** ficará da seguinte forma: 
+
+O arquivo **main.ts** ficará da seguinte forma:
 
 ```ts
 async function bootstrap() {
@@ -103,7 +271,7 @@ async function bootstrap() {
 bootstrap();
 ```
 
-- Agora é necessário indicar ao nest que a classe pipe responável por realizar a validação dos objetos é o **ValidationPipe**, isto é feito adicionando-o no array providers da seguinte forma: 
+- Agora é necessário indicar ao nest que a classe pipe responável por realizar a validação dos objetos é o **ValidationPipe**, isto é feito adicionando-o no array providers da seguinte forma:
 
 ```ts
 @Module({
@@ -116,44 +284,43 @@ bootstrap();
 })
 ```
 
-- Exemplo de classes utilizando as anotações da lib  **class-validator** que definem o typo a ser validado: 
+- Exemplo de classes utilizando as anotações da lib **class-validator** que definem o typo a ser validado:
 
 ```ts
-import { IsArray, IsString } from "class-validator";
+import { IsString } from 'class-validator';
 export class User {
-    @IsString()
-    id: number;
+  @IsNumber()
+  id: number;
 
-    @IsString()
-    username: string;
+  @IsString()
+  username: string;
 
-    @IsString()
-     @MinLength(8, { message: 'O password deve possuir pelo menos 8 caracteres' })
-    @Matches(/^(?=.*[0-9])/, { message: 'O password deve conter pelo menos um caractere numérico' })
-    password: string;
+  @IsString()
+  @MinLength(8, { message: 'O password deve possuir pelo menos 8 caracteres' })
+  @Matches(/^(?=.*[0-9])/, {
+    message: 'O password deve conter pelo menos um caractere numérico',
+  })
+  password: string;
 
-    @IsString()
-    name: string;
+  @IsString()
+  name: string;
 
-    @IsString()
-    email: string;
+  @IsString()
+  email: string;
 
-    @IsArray()
-    roles?: Array<RoleEnum>
-
-    constructor(data: Partial<User> = null) {
-        super();
-        if (data) {
-            Object.assign(this, {
-                id: data.id,
-                username: data.username,
-                password: data.password,
-                name: data.name,
-                email: data.email,
-                roles: data.roles
-            })
-        }
+  constructor(data: Partial<User> = null) {
+    super();
+    if (data) {
+      Object.assign(this, {
+        id: data.id,
+        username: data.username,
+        password: data.password,
+        name: data.name,
+        email: data.email,
+        roles: data.roles,
+      });
     }
+  }
 }
 ```
 
@@ -162,52 +329,57 @@ export class User {
 - No diretório '/src/core' crie um pasta chamada **exceptions** e um a **bussines-exception.ts**
 
 ```ts
-import { HttpException, HttpStatus } from "@nestjs/common";
+import { HttpException, HttpStatus } from '@nestjs/common';
 
 export class BusinessException extends HttpException {
-    constructor(public message: string) {
-        super(message, HttpStatus.BAD_REQUEST);
-    }
+  constructor(public message: string) {
+    super(message, HttpStatus.BAD_REQUEST);
+  }
 }
 ```
-- Essa classe que extende de HttpException será lançada em todos os casos de exceção tratados durante o desenvolvimento da seguinte forma: 
+
+- Essa classe que extende de HttpException será lançada em todos os casos de exceção tratados durante o desenvolvimento da seguinte forma:
 
 ```ts
  throw new BussinesExceptio("Aqui sua mensagem de erro", AlgumHTTPStatus ex: HttpStatus.BAD_REQUEST);
 ```
 
-- Retornando ao diretório '/src/core' crie agora uma pasta chamada **filters** e nesta pasta crie um arquivo chamado **exception.filter.ts**, e cole nele o código a seguir: 
+- Retornando ao diretório '/src/core' crie agora uma pasta chamada **filters** e nesta pasta crie um arquivo chamado **exception.filter.ts**, e cole nele o código a seguir:
 
 ```ts
-import { ArgumentsHost, Catch, ExceptionFilter, HttpException } from '@nestjs/common';
+import {
+  ArgumentsHost,
+  Catch,
+  ExceptionFilter,
+  HttpException,
+} from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
 import { BusinessException } from '../exceptions/business-exception';
 
-
 @Catch()
 export class AllExceptionFilter implements ExceptionFilter {
-    constructor(private readonly httpAdapterHost: HttpAdapterHost) { }
+  constructor(private readonly httpAdapterHost: HttpAdapterHost) {}
 
-    catch(exception: HttpException, host: ArgumentsHost) {
-        const { httpAdapter } = this.httpAdapterHost;
+  catch(exception: HttpException, host: ArgumentsHost) {
+    const { httpAdapter } = this.httpAdapterHost;
 
-        const ctx = host.switchToHttp();
-        const statusCode = exception.getStatus();
+    const ctx = host.switchToHttp();
+    const statusCode = exception.getStatus();
 
-        const message = exception instanceof BusinessException
-            ? exception.message
-            : "Houve um problema com sua requisição. Caso persista contate o suporte"
+    const message =
+      exception instanceof BusinessException
+        ? exception.message
+        : 'Houve um problema com sua requisição. Caso persista contate o suporte';
 
+    const responseBody = {
+      statusCode,
+      timestamp: new Date().toISOString(),
+      path: httpAdapter.getRequestUrl(ctx.getRequest()),
+      message: message,
+    };
 
-        const responseBody = {
-            statusCode,
-            timestamp: new Date().toISOString(),
-            path: httpAdapter.getRequestUrl(ctx.getRequest()),
-            message: message
-        };
-
-        httpAdapter.reply(ctx.getResponse(), responseBody, statusCode);
-    }
+    httpAdapter.reply(ctx.getResponse(), responseBody, statusCode);
+  }
 }
 ```
 
@@ -242,7 +414,7 @@ bootstrap();
 
 ### Configurando as variáveis de ambiente do projeto
 
-- O nestJs possui uma bibliteca que auxilia na criação e manipulação das variáveis de ambiente, execute o comando abaixo em um shell para adiciona-la em seu projeto: 
+- O nestJs possui uma bibliteca que auxilia na criação e manipulação das variáveis de ambiente, execute o comando abaixo em um shell para adiciona-la em seu projeto:
 
 ```sh
 $ npm i --save @nestjs/config
@@ -253,52 +425,53 @@ $ npm i --save @nestjs/config
 
 ```ts
 export default () => ({
-    jwt: {
-        secret: process.env.JWT_SECRET || 'teste',
-        signOptions: {
-            expiresIn: process.env.JWT_TOKEN_EXPIRATION && process.env.JWT_TOKEN_EXPIRATION !== "0"
-                ? process.env.JWT_TOKEN_EXPIRATION
-                : "1h",
-        }
+  jwt: {
+    secret: process.env.JWT_SECRET || 'teste',
+    signOptions: {
+      expiresIn:
+        process.env.JWT_TOKEN_EXPIRATION &&
+        process.env.JWT_TOKEN_EXPIRATION !== '0'
+          ? process.env.JWT_TOKEN_EXPIRATION
+          : '1h',
     },
-    db: {
-        dialect: process.env.DIALECT || 'postgres',
-        user: process.env.DATABASE_USER || 'docker',
-        password: process.env.DATABASE_PASSWORD || 'docker',
-        host: process.env.HOST || 'localhost',
-        port: process.env.PORT || '5442',
-        database: process.env.DATABASE || 'postegres',
-        url: process.env.DATABASE_URL || "postgresql://docker:docker@localhost:5442/postgres?schema=public"
-    }
-})
+  },
+  db: {
+    dialect: process.env.DIALECT || 'postgres',
+    user: process.env.DATABASE_USER || 'docker',
+    password: process.env.DATABASE_PASSWORD || 'docker',
+    host: process.env.HOST || 'localhost',
+    port: process.env.PORT || 5442,
+    database: process.env.DATABASE || 'postegres',
+    url:
+      process.env.DATABASE_URL ||
+      'postgresql://docker:docker@localhost:5442/postgres?schema=public',
+  },
+});
 ```
 
-- O arquivo acima verifica se há um arquivo .env e busca seus dados, caso o arquivo .env não ele define valores default que as variáveis devem assumir, **Ao criar novas configurações é importante criar as variáveis neste arquivo e adicionar o valor default que será utilizado localmente**
+- O arquivo acima verifica se há um arquivo .env e busca seus dados, caso o arquivo .env não exista, ele define valores default para as variáveis assumirem, **Ao criar novas configurações é importante criar as variáveis neste arquivo e adicionar o valor default que será utilizado localmente**
 
-- Para utilizar essas variáveis globalmente é necessário importar o ConfigModule(Criado e configurado pela lib)
-no **app.module.ts** da seguinte forma: 
+- Para utilizar essas variáveis globalmente é necessário importar o ConfigModule(Uma classe criada e configurada pela lib) no **app.module.ts** da seguinte forma:
 
 ```ts
 @Module({
-  imports: [
-    ConfigModule.forRoot({ isGlobal: true, load: [config] }),
-  ],
+  imports: [ConfigModule.forRoot({ isGlobal: true, load: [config] })],
   controllers: [],
   providers: [
     {
       provide: APP_PIPE,
       useClass: ValidationPipe,
     },
-        {
+    {
       provide: APP_FILTER,
       useClass: AllExceptionFilter,
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}
 ```
 
-- Para acessar os dados armazenados nas variáveis é necessário injetar a dependência **ConfigService** no construtor ou em uma factoryFunction como a seguir: 
+- Para acessar os dados armazenados nas variáveis é necessário injetar a dependência **ConfigService** no construtor ou em uma factoryFunction como a seguir:
 
 ```ts
 constructor(private configService: ConfigService) {
@@ -311,6 +484,190 @@ useFactory: (configservice: ConfigService) => ({
 })
 ```
 
+### Adicionando o Sequelize ORM
+
+- No shell adicione os seguintes comandos:
+
+```sh
+npm install sequelize
+```
+
+```sh
+npm install --save sequelize sequelize-typescript pg-hstore pg
+```
+
+```sh
+npm install --save-dev @types/sequelize
+```
+
+- Crie uma pasta chamada **database** no diretório '/src' e crie um arquivo chamado **database.providers.ts** e copie o código a seguir:
+
+```ts
+import { Sequelize } from 'sequelize-typescript';
+import { Cat } from '../cats/cat.entity';
+
+export const databaseProviders = [
+  {
+    provide: 'SEQUELIZE',
+    useFactory: async (private configService: ConfigService) => {
+      const sequelize = new Sequelize({
+        dialect: configService.get<string>('db.dialect'),
+        host: configService.get<string>('db.host'),
+        port: configService.get<string>('db.port'),
+        username: configService.get<string>('db.username'),
+        password: configService.get<string>('db.password'),
+        database: configService.get<string>('db.database'),
+      });
+      sequelize.addModels([Users]);
+      await sequelize.sync();
+      return sequelize;
+    },
+  },
+];
+```
+
+- Utilizado o Cli do nest iremos criar um modulo para exportar o provider acima:
+
+```sh
+npx nest g mo database
+```
+
+- No módulo criado ireamos adicionar o seguinte código:
+
+```ts
+import { Module } from '@nestjs/common';
+import { databaseProviders } from './database.providers';
+
+@Module({
+  providers: [...databaseProviders],
+  exports: [...databaseProviders],
+})
+export class DatabaseModule {}
+```
+
+- Para que o Sequelize funciona corretamente devemos anotar corretamente nossas classes como no exemplo a seguir, adicionando campos ao arquivo **user.entity.ts**:
+
+```ts
+@Table
+export class User extends Model<User> {
+  @Column({
+    primaryKey: true,
+    autoIncrementIdentity: true,
+    type: DataType.BIGINT,
+    allowNull: false,
+  })
+  @IsNumber()
+  id: number;
+
+  @Column({
+    type: DataType.STRING,
+    allowNull: false,
+  })
+  @IsString()
+  name: string;
+
+  @Column({
+    type: DataType.STRING,
+    allowNull: false,
+  })
+  @IsString()
+  username: string;
+
+  @Column({
+    type: DataType.STRING,
+    unique: true,
+    allowNull: false,
+  })
+  @IsString()
+  email: string;
+
+  @Column({
+    type: DataType.STRING,
+    allowNull: false,
+  })
+  @IsString()
+  @MinLength(8, { message: 'O password deve possuir pelo menos 8 caracteres' })
+  @Matches(/^(?=.*[0-9])/, {
+    message: 'O password deve conter pelo menos um caractere numérico',
+  })
+  password: string;
+
+  constructor(data: Partial<User> = null) {
+    super();
+    if (data) {
+      Object.assign(this, {
+        id: data.id,
+        username: data.username,
+        password: data.password,
+        name: data.name,
+        email: data.email,
+        roles: data.roles,
+      });
+    }
+  }
+}
+```
+
+- Mais informações de como adicionar Decoratos Sequelize nas suas classes em:
+  https://sequelize.org/docs/v6/core-concepts/model-basics/
+
+- Para utilizar o model de user é necessário criar um provider para classe, no diretorio 'src/modules/providers'
+  o arquivo **user.providers.ts**
+
+```ts
+export const userProviders = [
+  {
+    provide: 'USER_REPOSITORY',
+    useValue: User,
+  },
+];
+```
+
+- Adicione o provider definido acima ao arquivo **user.module.ts**
+
+```ts
+import { Module } from '@nestjs/common';
+import { UsersController } from './users.controller';
+import { UsersRepository } from './users.repository';
+import { UsersService } from './users.service';
+
+@Module({
+  controllers: [UsersController],
+  providers: [UsersService, UsersRepository, ...userProviders],
+  exports: [UsersService],
+})
+export class UsersModule {}
+```
+
+- E é necessário atualizar sua classe de repository como a seguinte:
+
+```ts
+import { Injectable } from '@nestjs/common';
+import { User } from './entities/user.entity';
+
+@Injectable()
+export class UsersRepository {
+  constructor(
+    @Inject('USER_REPOSITORY')
+    private sequelizeUser: typeof User,
+  ) {}
+
+  public async create(data: User): Promise<User> {}
+
+  public async findAll(): Promise<Array<User>> {
+    return this.sequelizeUser.findAll<User>();
+  }
+
+  public async findOne(id: string): Promise<User> {}
+
+  public async findBy(filters: User): Promise<void> {}
+
+  public async update(id: string, dto: User): Promise<void> {}
+
+  public async remove(id: string): Promise<void> {}
+}
+```
+
 ### Autenticação
 
 - Para realização de autenticação/autorização é necessário adicionar a lib que cria o token jwt ao projeto executando o comando a seguir no shell
@@ -319,7 +676,7 @@ useFactory: (configservice: ConfigService) => ({
 $ npm install --save @nestjs/jwt
 ```
 
-- É necessário registrar algumas configurações no **app.module.ts** para que o token jwt seja gerado e validado, um exemplo é mostrado abaixo: 
+- É necessário registrar algumas configurações no **app.module.ts** para que o token jwt seja gerado e validado, um exemplo é mostrado abaixo:
 
 ```ts
 @Module({
@@ -333,23 +690,24 @@ $ npm install --save @nestjs/jwt
         signOptions: configService.get<JwtSignOptions>('jwt.signOptions'),
       }),
       global: true,
-    })],
+    }),
+  ],
   controllers: [],
   providers: [
     {
       provide: APP_PIPE,
       useClass: ValidationPipe,
     },
-        {
+    {
       provide: APP_FILTER,
       useClass: AllExceptionFilter,
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}
 ```
 
-- A Lib contem algumas classes utilitárias como o **JwtService**, que possui um método padrão de geração de token um exemplo a seguir: 
+- A Lib contem algumas classes utilitárias como o **JwtService**, que possui um método padrão de geração de token um exemplo a seguir:
 
 ```ts
   async signIn(
@@ -366,16 +724,17 @@ export class AppModule { }
     };
   }
 ```
-- No código acima o método **signAsync** cria um token jwt inserindo os dados passados como parâmetros ao payload do token junto com alguns dados default como a data de geração do token e a data de expiração(o tempo de expiração é definido nas variáveis de ambiente do projeto em jwt.signOptions.expiresIn) 
 
-- A autenticação é realizada através da lib **passport**, para isso é necessário instalar suas dependências: 
+- No código acima o método **signAsync** cria um token jwt inserindo os dados passados como parâmetros ao payload do token junto com alguns dados default como a data de geração do token e a data de expiração(o tempo de expiração é definido nas variáveis de ambiente do projeto em jwt.signOptions.expiresIn)
+
+- A autenticação é realizada através da lib **passport**, para isso é necessário instalar suas dependências:
 
 ```shell
 $ npm install --save @nestjs/passport passport passport-local
 $ npm install --save-dev @types/passport-local
 ```
 
-- No diretório '/src/core' crie uma pasta chamada **guards** e nela crie um arquivo chamado **local.guard.ts** e cole o código seguir: 
+- No diretório '/src/core' crie uma pasta chamada **guards** e nela crie um arquivo chamado **local.guard.ts** e cole o código seguir:
 
 ```ts
 import { ExecutionContext, Injectable } from '@nestjs/common';
@@ -384,15 +743,17 @@ import { Observable } from 'rxjs';
 
 @Injectable()
 export class LocalAuthGuard extends AuthGuard('local') {
-    canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
-        return super.canActivate(context);
-    }
+  canActivate(
+    context: ExecutionContext,
+  ): boolean | Promise<boolean> | Observable<boolean> {
+    return super.canActivate(context);
+  }
 }
 ```
 
 - O guard acima será responsável pela validação de usuário e senha passados nas requisições.
 
-- A seguir, no diretório '/src/core' crie um pasta chamada **auth-strategies** e nela crie um arquivo chamado **local-strategy.ts** e copie o código a seguir 
+- A seguir, no diretório '/src/core' crie um pasta chamada **auth-strategies** e nela crie um arquivo chamado **local-strategy.ts** e copie o código a seguir
 
 ```ts
 import { Injectable, UnauthorizedException } from '@nestjs/common';
@@ -402,19 +763,19 @@ import { AuthService } from '../auth.service';
 
 @Injectable()
 export class LocalStrategy extends PassportStrategy(Strategy) {
-    constructor(private authService: AuthService) {
-        super();
-    }
+  constructor(private authService: AuthService) {
+    super();
+  }
 
-    validate(seusParametros) {
-      Seu_metodo_de_autenticação_local; 
-    }
+  validate(seusParametros) {
+    Seu_metodo_de_autenticação_local;
+  }
 }
 ```
 
 - Na classe acima substitua o código, mantendo o nome da função(validate) para que o passport entenda que o método de valição utilizado no guard seja o que está definido no escopo da função validate.
 
-- O guard necessita ser provida para ser utilizado globalmente, desta maneira, no arquivo **app.module.ts** adicione ao array de provides o código a seguir: 
+- O guard necessita ser provida para ser utilizado globalmente, desta maneira, no arquivo **app.module.ts** adicione ao array de provides o código a seguir:
 
 ```ts
 @Module({
@@ -444,9 +805,10 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
 })
 ```
 
-- Para utilizar o guard criado adicione o decorator **@UseGuards(AuthGuard('local'))** no endpoint ou controllers em que deseja realizar a proteção, por exemplo: 
+- Para utilizar o guard criado adicione o decorator **@UseGuards(AuthGuard('local'))** no endpoint ou controllers em que deseja realizar a proteção, por exemplo:
 
-- Como validar um endpoint: 
+- Como validar um endpoint:
+
 ```ts
 import { Controller, Request, Post, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
@@ -460,9 +822,10 @@ export class AppController {
   }
 }
 ```
+
 - Da forma definida acima, apenas o endpoint login é protegido pelo guard.
 
-- Como validar um controller: 
+- Como validar um controller:
 
 ```ts
 import { Controller, Request, Post, UseGuards } from '@nestjs/common';
@@ -480,25 +843,25 @@ export class AppController {
 
 - Desta outra maneira todos os endpoints definidos no controller serão protegidos pelo guard.
 
-- Para validação de tokens de um usuário logado há a necessidade de criarmos outra estratégia de valiação também presente da lib passport 
+- Para validação de tokens de um usuário logado há a necessidade de criarmos outra estratégia de valiação também presente da lib passport
 
-- Voltando ao diretório '/src/core/auth-strategies crie um arquivo chamado: **jwt.strategy.ts** e adicione o código a seguir: 
+- Voltando ao diretório '/src/core/auth-strategies crie um arquivo chamado: **jwt.strategy.ts** e adicione o código a seguir:
 
 ```ts
-import { Injectable } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import { PassportStrategy } from "@nestjs/passport";
+import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-    constructor(private configService: ConfigService) {
-        super({
-            jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-            ignoreExpiration: false,
-            secretOrKey: configService.get<string>('jwt.secret')
-        })
-    }
+  constructor(private configService: ConfigService) {
+    super({
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ignoreExpiration: false,
+      secretOrKey: configService.get<string>('jwt.secret'),
+    });
+  }
 
   async validate(payload: any) {
     return { userId: payload.sub, username: payload.username };
@@ -506,20 +869,22 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 }
 ```
 
-- A lib do passport decodifica e válida o token jwt recebida na requisição, algumas configurações são passadas no construtor, mas é realmente importante que **o valor passado para secretOrKey seja o mesmo registrado como secret na sua configuração, já que a lib passport usa-o como umas das validações do token** 
+- A lib do passport decodifica e válida o token jwt recebida na requisição, algumas configurações são passadas no construtor, mas é realmente importante que **o valor passado para secretOrKey seja o mesmo registrado como secret na sua configuração, já que a lib passport usa-o como umas das validações do token**
 
-- No diretório '/src/core/guards' crie um arquivo chamado **jwt-strategy.ts** e cole o sódigo a seguir: 
+- No diretório '/src/core/guards' crie um arquivo chamado **jwt-strategy.ts** e cole o sódigo a seguir:
 
 ```ts
-import { ExecutionContext, Injectable } from "@nestjs/common";
-import { AuthGuard } from "@nestjs/passport";
-import { Observable } from "rxjs";
+import { ExecutionContext, Injectable } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { Observable } from 'rxjs';
 
 @Injectable()
 export class JwtAuthGuard extends AuthGuard('jwt') {
-    canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
-        return super.canActivate(context);
-    }
+  canActivate(
+    context: ExecutionContext,
+  ): boolean | Promise<boolean> | Observable<boolean> {
+    return super.canActivate(context);
+  }
 }
 ```
 
@@ -553,11 +918,8 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
   ],
 })
 ```
+
 - A forma de utilizar o guard é a mesma exposta no item anterior (LocalGuard)
-
-
-
-
 
 ## Comandos
 

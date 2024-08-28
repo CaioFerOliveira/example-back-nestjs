@@ -11,12 +11,16 @@ export class UsersService {
   constructor(private repository: UsersRepository) { }
 
   public async create(dto: UserDto): Promise<User> {
-    const userExist = await this.userExist(dto.username)
+    const userExist = await this.userExist(dto.username);
+
     if (userExist) {
       throw new BusinessException("O usuário já está cadastrado");
     }
+
     const user = new User(dto);
+
     user.password = await this.hashPassword(dto.password);
+
     return await this.repository.create(user);
   }
 

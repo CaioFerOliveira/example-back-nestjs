@@ -11,10 +11,6 @@ import { UserDto } from './dto/user.dto';
 import { USER_DTO_SCHEMA } from './schema/user-dto-zod-schema';
 import { UsersService } from './users.service';
 
-// @ApiHeader({
-//   name: 'Users',
-//   description: 'Controller de usuários',
-// })
 @Controller('users')
 @ApiBearerAuth()
 export class UsersController {

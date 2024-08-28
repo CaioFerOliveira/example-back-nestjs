@@ -6,6 +6,7 @@ import { KnexModule } from "nestjs-knex";
 import { AuthModule } from "./modules/auth/auth.module";
 import { AuthService } from "./modules/auth/auth.service";
 import { UsersModule } from "./modules/users/users.module";
+import { DatabaseModule } from './database/database.module';
 
 
 @Module({
@@ -34,7 +35,7 @@ import { UsersModule } from "./modules/users/users.module";
         signOptions: configService.get<JwtSignOptions>('jwt.signOptions'),
       }),
       global: true,
-    }), UsersModule, AuthModule],
+    }), UsersModule, AuthModule, DatabaseModule],
   controllers: [],
   providers: [
     AuthService,
