@@ -1,22 +1,25 @@
 import { Injectable } from '@nestjs/common';
-import knex from 'knex';
+import { InjectConnection, Knex } from 'nestjs-knex';
 import { User } from './entities/user.entity';
 
 @Injectable()
 export class UsersRepository {
 
-    constructor() { }
+    constructor(
+        @InjectConnection() private readonly knex: Knex
+    ) { }
 
-    public async create(data: User): Promise<void> {
-        return await knex('users').insert({ data });
+    public async create(data: User): Promise<User> {
+        return await this.knex.select().table('users').insert({ username: data.username, password: data.password, name: data.name, email: data.email });
     }
 
-    public async findAll(): Promise<void> {
-        // return await 
+    public async findAll(): Promise<Array<User>> {
+        return await this.knex.table('users');
     }
 
     public async findOne(id: string): Promise<User> {
-        return await knex('user').where('id').first();
+        const teste = await this.knex.table("users").first().where('id', parseInt(id));
+        return teste;
     }
 
     public async findBy(filters: User): Promise<void> {
@@ -25,12 +28,9 @@ export class UsersRepository {
         // });
     }
 
-    public async userExist(username: string): Promise<void> {
-        // return await this.prismaService.user.findFirst({
-        //     where: {
-        //         username
-        //     }
-        // });
+    public async userExist(username: string): Promise<User> {
+        const user = await this.knex.select().table('users').where({ username: username }).first();
+        return user;
     }
 
     public async update(id: string, dto: User): Promise<void> {
@@ -43,10 +43,6 @@ export class UsersRepository {
     }
 
     public async remove(id: string): Promise<void> {
-        // await this.prismaService.user.delete({
-        //     where: {
-        //         id
-        //     }
-        // })
+        await this.knex.select().table('users').where('id', id).del();
     }
 }

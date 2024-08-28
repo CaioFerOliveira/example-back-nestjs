@@ -2,20 +2,13 @@ import { ApiProperty } from "@nestjs/swagger";
 import { IsArray, IsString } from "class-validator";
 import { RoleEnum } from "src/core/enums/role.enum";
 
-export class UserDto {
+export class UserResponseDto {
     @ApiProperty({
         description: 'Login do usuário',
         type: String,
     })
     @IsString()
     readonly username: string;
-
-    @ApiProperty({
-        description: 'Password do usuário',
-        type: String,
-    })
-    @IsString()
-    password: string;
 
     @ApiProperty({
         description: 'Nome do usuário',
@@ -37,4 +30,15 @@ export class UserDto {
     })
     @IsArray()
     readonly roles?: Array<RoleEnum>;
+
+    constructor(data: Partial<UserResponseDto>) {
+        if (data) {
+            Object.assign(this, {
+                username: data.username,
+                name: data.name,
+                email: data.email,
+                roles: data.roles
+            });
+        }
+    }
 }

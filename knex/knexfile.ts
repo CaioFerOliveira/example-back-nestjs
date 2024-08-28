@@ -1,11 +1,12 @@
+import * as config from '../config/config';
 export default {
     client: 'pg',
     connection: process.env.DATABASE_URL || {
-        host: process.env.HOST || 'localhost',
-        port: parseInt(process.env.PORT) || 5442,
-        user: process.env.DATABASE_USER || 'docker',
-        database: process.env.DATABASE || 'postgres',
-        password: process.env.DATABASE_PASSWORD || 'docker',
+        host: config.db.host,
+        port: config.db.port,
+        user: config.db.user,
+        database: config.db.database,
+        password: config.db.password,
         ssl: process.env.SSL === 'true' ? { rejectUnauthorized: false } : false,
     },
     pool: { min: 2, max: 10 },

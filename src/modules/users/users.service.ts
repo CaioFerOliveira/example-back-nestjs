@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { BusinessException } from 'src/core/exceptions/business-exception';
+import { UserResponseDto } from './dto/user-dto-response';
 import { UserDto } from './dto/user.dto';
 import { User } from './entities/user.entity';
 import { UsersRepository } from './users.repository';
@@ -11,23 +12,30 @@ export class UsersService {
 
   public async create(dto: UserDto): Promise<User> {
     const userExist = await this.userExist(dto.username)
-
     if (userExist) {
       throw new BusinessException("O usuário já está cadastrado");
     }
-
     const user = new User(dto);
-    // if (userLogged) {
-    //   user.createdBy = userLogged.userId;
-    // }
     user.password = await this.hashPassword(dto.password);
-    await this.repository.create(user);
-    return;
+    return await this.repository.create(user);
   }
 
-  public async findAll(): Promise<Array<User>> {
-    await this.repository.findAll();
-    return;
+  public async findById(id: string): Promise<UserResponseDto> {
+    console.log(id)
+    if (!id) {
+      throw new BusinessException("O id informado é inválido");
+    }
+    const user = await this.findOne(id);
+    return new UserResponseDto(user);
+  }
+
+  public async findAll(): Promise<Array<UserResponseDto>> {
+    let dtos: Array<UserResponseDto> = [];
+    let users = await this.repository.findAll();
+    users.map((user: User) => {
+      dtos.push(new UserResponseDto(user));
+    })
+    return dtos;
   }
 
   public async findOne(id: string): Promise<User> {
@@ -62,8 +70,7 @@ export class UsersService {
   }
 
   public async userExist(username: string): Promise<User> {
-    await this.repository.userExist(username);
-    return;
+    return await this.repository.userExist(username);
   }
 
   public createFilters(data: User): any {
