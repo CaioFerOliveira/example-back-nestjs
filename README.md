@@ -248,7 +248,7 @@ bootstrap();
 $ npm i --save @nestjs/config
 ```
 
-- No diretorio '/src' crie um pasta chamada **config** e nesta pasta crie um arquivo chamado **config.ts**
+- Na raiz do projeto crie um pasta chamada **config** e nesta pasta crie um arquivo chamado **config.ts**
 - No arquivo **config.ts** adicione o código abaixo:
 
 ```ts
@@ -418,6 +418,18 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
 
 ```ts
 @Module({
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true, load: [config] }),
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => ({
+        secret: configService.get<string>('jwt.secret'),
+        signOptions: configService.get<JwtSignOptions>('jwt.signOptions'),
+      }),
+      global: true,
+    })],
+  controllers: [],
   providers: [
     {
       provide: APP_PIPE,
@@ -515,6 +527,18 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
 
 ```ts
 @Module({
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true, load: [config] }),
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => ({
+        secret: configService.get<string>('jwt.secret'),
+        signOptions: configService.get<JwtSignOptions>('jwt.signOptions'),
+      }),
+      global: true,
+  })],
+  controllers: [],
   providers: [
     {
       provide: APP_PIPE,

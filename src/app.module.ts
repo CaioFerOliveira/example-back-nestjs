@@ -22,7 +22,6 @@ import { UsersModule } from "./modules/users/users.module";
           },
           migrations: {
             directory: '../knex/migrations',
-
           }
         }
       })
