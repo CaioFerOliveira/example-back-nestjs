@@ -24,8 +24,7 @@ export class UsersService {
     return await this.repository.create(user);
   }
 
-  public async findById(id: string): Promise<UserResponseDto> {
-    console.log(id)
+  public async findById(id: number): Promise<UserResponseDto> {
     if (!id) {
       throw new BusinessException("O id informado é inválido");
     }
@@ -42,30 +41,18 @@ export class UsersService {
     return dtos;
   }
 
-  public async findOne(id: string): Promise<User> {
+  public async findOne(id: number): Promise<User> {
     let user = await this.repository.findOne(id);
     return user;
   }
 
-  public async findBy(data: User): Promise<Array<User>> {
-    const filters = this.createFilters(data);
-    await this.repository.findBy(filters);
-    return;
-  }
-
-  public async update(id: string, dto: UserDto, req: any): Promise<User> {
+  public async update(id: number, dto: UserDto, req: any): Promise<[User[], number]> {
     let user = await this.findOne(id);
 
-    const userLogged = req.user;
-    Object.assign(user, dto);
-    user.updatedBy = userLogged;
-    user.updatedAt = new Date();
-
-    await this.repository.update(id, user);
-    return;
+    return await this.repository.update(id, user);;
   }
 
-  public async remove(id: string): Promise<void> {
+  public async remove(id: number): Promise<void> {
     const user = await this.findOne(id);
     if (!user) {
       throw new BusinessException("Usuário não encontrado")
@@ -75,15 +62,6 @@ export class UsersService {
 
   public async userExist(username: string): Promise<User> {
     return await this.repository.userExist(username);
-  }
-
-  public createFilters(data: User): any {
-    const filters = {
-      ...(data.name && { name: data.name }),
-      ...(data.email && { email: data.email }),
-      ...(data.username && { username: data.username }),
-    };
-    return filters;
   }
 
   public async hashPassword(password: string): Promise<string> {

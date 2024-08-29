@@ -1,48 +1,42 @@
-import { Injectable } from '@nestjs/common';
-import { InjectConnection, Knex } from 'nestjs-knex';
+import { Inject, Injectable } from '@nestjs/common';
 import { User } from './entities/user.entity';
 
 @Injectable()
 export class UsersRepository {
 
     constructor(
-        @InjectConnection() private readonly knex: Knex
+        @Inject('USER_REPOSITORY')
+        private sequelizeUser: typeof User,
     ) { }
 
     public async create(data: User): Promise<User> {
-        return await this.knex.select().table('users').insert({ username: data.username, password: data.password, name: data.name, email: data.email });
+        return await this.sequelizeUser.create<User>(data);
     }
 
     public async findAll(): Promise<Array<User>> {
-        return await this.knex.table('users');
+        return await this.sequelizeUser.findAll<User>();
     }
 
-    public async findOne(id: string): Promise<User> {
-        const teste = await this.knex.table("users").first().where('id', parseInt(id));
+    public async findOne(id: number): Promise<User> {
+        const teste = await this.sequelizeUser.findByPk<User>(id)
         return teste;
     }
 
-    public async findBy(filters: User): Promise<void> {
-        // return await this.prismaService.user.findMany({
-        //     where: filters
-        // });
-    }
-
     public async userExist(username: string): Promise<User> {
-        const user = await this.knex.select().table('users').where({ username: username }).first();
+        const user = await this.sequelizeUser.findOne<User>({ where: { username } });
         return user;
     }
 
-    public async update(id: string, dto: User): Promise<void> {
-        // return await this.prismaService.user.update({
-        //     data: dto,
-        //     where: {
-        //         id,
-        //     },
-        // })
+    public async update(id: number, dto: User): Promise<[User[], number]> {
+        const [affectedCount, updatedUsers] = await this.sequelizeUser.update(dto, {
+            where: { id },
+            returning: true,
+        });
+        return [updatedUsers, affectedCount];
     }
 
-    public async remove(id: string): Promise<void> {
-        await this.knex.select().table('users').where('id', id).del();
+    public async remove(id: number): Promise<void> {
+        const user = await this.findOne(id);
+        user.destroy();
     }
 }

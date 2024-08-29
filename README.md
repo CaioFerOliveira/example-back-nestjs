@@ -503,22 +503,23 @@ npm install --save-dev @types/sequelize
 - Crie uma pasta chamada **database** no diretório '/src' e crie um arquivo chamado **database.providers.ts** e copie o código a seguir:
 
 ```ts
+import { ConfigService } from '@nestjs/config';
+import { Dialect } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
-import { Cat } from '../cats/cat.entity';
+import { User } from 'src/modules/users/entities/user.entity';
 
 export const databaseProviders = [
   {
     provide: 'SEQUELIZE',
-    useFactory: async (private configService: ConfigService) => {
-      const sequelize = new Sequelize({
-        dialect: configService.get<string>('db.dialect'),
+    useFactory: async (configService: ConfigService) => {
+      const sequelize = new Sequelize(configService.get<string>('db.url'), {
         host: configService.get<string>('db.host'),
-        port: configService.get<string>('db.port'),
+        database: configService.get<string>('db.database'),
         username: configService.get<string>('db.username'),
         password: configService.get<string>('db.password'),
-        database: configService.get<string>('db.database'),
+        dialect: configService.get<string>('db.dialect') as Dialect,
       });
-      sequelize.addModels([Users]);
+      sequelize.addModels([User]);
       await sequelize.sync();
       return sequelize;
     },
@@ -548,49 +549,48 @@ export class DatabaseModule {}
 - Para que o Sequelize funciona corretamente devemos anotar corretamente nossas classes como no exemplo a seguir, adicionando campos ao arquivo **user.entity.ts**:
 
 ```ts
+import { IsArray, IsString, Matches, MinLength } from 'class-validator';
+import { Column, DataType, Model, Table } from 'sequelize-typescript';
+import { RoleEnum } from 'src/core/enums/role.enum';
 @Table
 export class User extends Model<User> {
-  @Column({
-    primaryKey: true,
-    autoIncrementIdentity: true,
-    type: DataType.BIGINT,
-    allowNull: false,
-  })
-  @IsNumber()
+  @Column({ primaryKey: true, autoIncrement: true, type: DataType.INTEGER })
   id: number;
 
+  @IsString()
   @Column({
     type: DataType.STRING,
     allowNull: false,
   })
-  @IsString()
-  name: string;
-
-  @Column({
-    type: DataType.STRING,
-    allowNull: false,
-  })
-  @IsString()
   username: string;
 
-  @Column({
-    type: DataType.STRING,
-    unique: true,
-    allowNull: false,
-  })
-  @IsString()
-  email: string;
-
-  @Column({
-    type: DataType.STRING,
-    allowNull: false,
-  })
   @IsString()
   @MinLength(8, { message: 'O password deve possuir pelo menos 8 caracteres' })
   @Matches(/^(?=.*[0-9])/, {
     message: 'O password deve conter pelo menos um caractere numérico',
   })
+  @Column({
+    type: DataType.STRING,
+    allowNull: false,
+  })
   password: string;
+
+  @IsString()
+  @Column({
+    type: DataType.STRING,
+    allowNull: false,
+  })
+  name: string;
+
+  @IsString()
+  @Column({
+    type: DataType.STRING,
+    allowNull: false,
+  })
+  email: string;
+
+  @IsArray()
+  roles?: Array<RoleEnum>;
 
   constructor(data: Partial<User> = null) {
     super();
@@ -611,10 +611,12 @@ export class User extends Model<User> {
 - Mais informações de como adicionar Decoratos Sequelize nas suas classes em:
   https://sequelize.org/docs/v6/core-concepts/model-basics/
 
-- Para utilizar o model de user é necessário criar um provider para classe, no diretorio 'src/modules/providers'
+- Para utilizar o model de user é necessário criar um provider para classe, no diretório 'src/modules/users/providers'
   o arquivo **user.providers.ts**
 
 ```ts
+import { User } from '../entities/user.entity';
+
 export const userProviders = [
   {
     provide: 'USER_REPOSITORY',
@@ -627,6 +629,7 @@ export const userProviders = [
 
 ```ts
 import { Module } from '@nestjs/common';
+import { userProviders } from './providers/user.providers';
 import { UsersController } from './users.controller';
 import { UsersRepository } from './users.repository';
 import { UsersService } from './users.service';
@@ -634,7 +637,7 @@ import { UsersService } from './users.service';
 @Module({
   controllers: [UsersController],
   providers: [UsersService, UsersRepository, ...userProviders],
-  exports: [UsersService],
+  exports: [UsersService, UsersRepository],
 })
 export class UsersModule {}
 ```
@@ -642,7 +645,7 @@ export class UsersModule {}
 - E é necessário atualizar sua classe de repository como a seguinte:
 
 ```ts
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { User } from './entities/user.entity';
 
 @Injectable()
@@ -652,19 +655,38 @@ export class UsersRepository {
     private sequelizeUser: typeof User,
   ) {}
 
-  public async create(data: User): Promise<User> {}
-
-  public async findAll(): Promise<Array<User>> {
-    return this.sequelizeUser.findAll<User>();
+  public async create(data: User): Promise<User> {
+    return await this.sequelizeUser.create<User>(data);
   }
 
-  public async findOne(id: string): Promise<User> {}
+  public async findAll(): Promise<Array<User>> {
+    return await this.sequelizeUser.findAll<User>();
+  }
 
-  public async findBy(filters: User): Promise<void> {}
+  public async findOne(id: number): Promise<User> {
+    const teste = await this.sequelizeUser.findByPk<User>(id);
+    return teste;
+  }
 
-  public async update(id: string, dto: User): Promise<void> {}
+  public async userExist(username: string): Promise<User> {
+    const user = await this.sequelizeUser.findOne<User>({
+      where: { username },
+    });
+    return user;
+  }
 
-  public async remove(id: string): Promise<void> {}
+  public async update(id: string, dto: User): Promise<[User[], number]> {
+    const [affectedCount, updatedUsers] = await this.sequelizeUser.update(dto, {
+      where: { id },
+      returning: true,
+    });
+    return [updatedUsers, affectedCount];
+  }
+
+  public async remove(id: number): Promise<void> {
+    const user = await this.findOne(id);
+    user.destroy();
+  }
 }
 ```
 
@@ -920,16 +942,3 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
 ```
 
 - A forma de utilizar o guard é a mesma exposta no item anterior (LocalGuard)
-
-## Comandos
-
-```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
-```

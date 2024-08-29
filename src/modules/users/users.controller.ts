@@ -48,7 +48,7 @@ export class UsersController {
     @Param('id') id: string,
   ) {
     try {
-      return this.usersService.findById(id);
+      return this.usersService.findById(+id);
 
     } catch (error) {
       throw new BusinessException(error.message);
@@ -64,7 +64,7 @@ export class UsersController {
     @Req() req: Request
   ) {
     try {
-      return this.usersService.update(id, dto, req);
+      return this.usersService.update(+id, dto, req);
 
     } catch (error) {
       throw new BusinessException(`Error updating user with ${id}`);
@@ -79,7 +79,7 @@ export class UsersController {
     @Param('id') id: string,
   ) {
     try {
-      return this.usersService.remove(id);
+      return this.usersService.remove(+id);
 
     } catch (error) {
       throw new BusinessException(`Error when removing user with ${id}`);
