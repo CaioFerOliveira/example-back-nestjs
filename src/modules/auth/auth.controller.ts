@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { Request } from 'express';
 import { JwtAuthGuard } from 'src/core/guards/jwt.guard';
@@ -15,6 +15,11 @@ export class AuthController {
   @UseGuards(LocalAuthGuard)
   create(@Body() credentials: LoginDto) {
     return this.authService.login(credentials);
+  }
+
+  @Get('/validar-token')
+  validarToken(@Query('token') token: any) {
+    return this.authService.validateToken(token);
   }
 
   @UseGuards(JwtAuthGuard)

@@ -33,9 +33,20 @@ export class AuthService {
     return user;
   }
 
+  public async validateToken(token: string): Promise<boolean> {
+    const tokenDecodificado: IToken = await this.jwtService.verifyAsync(token);
+    return tokenDecodificado.exp > new Date().getMilliseconds();
+  }
+
   private async generateToken(userId: number) {
     //TODO ADICIONAR AS PERMISSÕES AO PAYLOAD DO JWT
     const acessToken = this.jwtService.sign({ userId });
     return { acessToken }
   }
+}
+
+interface IToken {
+  userId: number,
+  iat: number,
+  exp: number
 }
