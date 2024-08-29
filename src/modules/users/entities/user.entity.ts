@@ -3,7 +3,7 @@ import { Column, DataType, Model, Table } from "sequelize-typescript";
 import { RoleEnum } from "src/core/enums/role.enum";
 @Table({
     version: true,
-    tableName: 'user'
+    tableName: 'users'
 })
 export class User extends Model<User> {
 
