@@ -695,9 +695,37 @@ export class UsersRepository {
 }
 ```
 
+### Hashing
+
+- Em alguns momentos será necessário realizar aplicar um algoritmo de hash em informações sensíveis, para isso
+  será utilizada a lib **bcrypt**, dessa fora execute os comandos abaixo:
+
+```shell
+  npm i bcrypt
+  npm i -D @types/bcrypt
+```
+
+- Um exemplo de utilização é na proteção da senha dos usuários:
+
+```ts
+  public async hashPassword(password: string): Promise<string> {
+    const saltRounds = 10;
+    return await bcrypt.hash(password, saltRounds);
+  }
+```
+
+- A lib também permite a comparação dos dados em hash com novos dados recebidos do frontEnd para validações como:
+
+```ts
+  public async comparePasswords(enteredPassword: string, hashedPassword: string): Promise<boolean> {
+    return await bcrypt.compare(enteredPassword, hashedPassword);
+  }
+```
+
 ### Autenticação
 
-- Para realização de autenticação/autorização é necessário adicionar a lib que cria o token jwt ao projeto executando o comando a seguir no shell
+- Para realização de autenticação/autorização é necessário adicionar a lib que cria o token jwt ao projeto executando o
+  comando a seguir no shell
 
 ```shell
 $ npm install --save @nestjs/jwt
