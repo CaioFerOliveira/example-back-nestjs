@@ -552,7 +552,10 @@ export class DatabaseModule {}
 import { IsArray, IsString, Matches, MinLength } from 'class-validator';
 import { Column, DataType, Model, Table } from 'sequelize-typescript';
 import { RoleEnum } from 'src/core/enums/role.enum';
-@Table
+@Table({
+  version: true,
+  tableName: 'user',
+})
 export class User extends Model<User> {
   @Column({ primaryKey: true, autoIncrement: true, type: DataType.INTEGER })
   id: number;
@@ -609,7 +612,9 @@ export class User extends Model<User> {
 ```
 
 - Mais informações de como adicionar Decoratos Sequelize nas suas classes em:
-  https://sequelize.org/docs/v6/core-concepts/model-basics/
+  https://www.npmjs.com/package/sequelize-typescript#type-safe-usage-of-auto-generated-functions
+
+- O locking otimista é implementado pela própria ORM adicionando a config version: true ao decorator @table()
 
 - Para utilizar o model de user é necessário criar um provider para classe, no diretório 'src/modules/users/providers'
   o arquivo **user.providers.ts**

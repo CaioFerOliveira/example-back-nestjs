@@ -1,7 +1,10 @@
 import { IsArray, IsString, Matches, MinLength } from "class-validator";
 import { Column, DataType, Model, Table } from "sequelize-typescript";
 import { RoleEnum } from "src/core/enums/role.enum";
-@Table
+@Table({
+    version: true,
+    tableName: 'user'
+})
 export class User extends Model<User> {
 
     @Column({ primaryKey: true, autoIncrement: true, type: DataType.INTEGER }
