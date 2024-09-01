@@ -85,7 +85,7 @@ export class AppModule {}
 - No diretório '/src' crie um pasta chamada modules, e em seguida executa o comando:
 
 ```sh
-nest g resource modules/users
+$ npx nest g resource modules/users
 ```
 
 - A CLI irá criar um estrutura padrão de CRUD, com o path passado, no exemplo 'modules/users'
@@ -156,6 +156,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 @Injectable()
 export class UsersService {
   constructor(private repository: UsersRepository) {}
+
   create(createUserDto: CreateUserDto) {
     return 'This action adds a new user';
   }
@@ -271,7 +272,8 @@ async function bootstrap() {
 bootstrap();
 ```
 
-- Agora é necessário indicar ao nest que a classe pipe responável por realizar a validação dos objetos é o **ValidationPipe**, isto é feito adicionando-o no array providers da seguinte forma:
+- Agora é necessário indicar ao nest que a classe pipe responável por realizar a validação dos objetos é o
+  **ValidationPipe**, isto é feito adicionando-o no array providers da seguinte forma:
 
 ```ts
 @Module({
@@ -691,6 +693,97 @@ export class UsersRepository {
   public async remove(id: number): Promise<void> {
     const user = await this.findOne(id);
     user.destroy();
+  }
+}
+```
+
+### Adicionando transações a um método
+
+- No módulo da entidade desejada adicione o import do **databaseModule**, como a seguir:
+
+```ts
+import { Module } from '@nestjs/common';
+import { userProviders } from './providers/user.providers';
+import { UsersController } from './users.controller';
+import { UsersRepository } from './users.repository';
+import { UsersService } from './users.service';
+import { DatabaseModule } from './database/database.module';
+
+@Module({
+  controllers: [UsersController],
+  providers: [UsersService, UsersRepository, ...userProviders],
+  exports: [UsersService, UsersRepository],
+  imports: [DatabaseModule],
+})
+export class UsersModule {}
+```
+
+- Desta forma o conteúdo do módulo de database, estará disponível para o módulo que foi importado. Na classe de serviço
+  injete a dependência do 'SEQUELIZE' via construtor da classe, essa dependência representa a conexão entre o sequelize
+  e o banco de dados:
+
+```ts
+import { Inject, Injectable } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
+import { Sequelize } from 'sequelize';
+import { BusinessException } from 'src/core/exceptions/business-exception';
+import { UserResponseDto } from './dto/user-dto-response';
+import { UserDto } from './dto/user.dto';
+import { User } from './entities/user.entity';
+import { UsersRepository } from './users.repository';
+
+@Injectable()
+export class UsersService {
+  constructor(
+    private repository: UsersRepository,
+    @Inject('SEQUELIZE') private readonly sequelizeConnetion: Sequelize,
+  ) {}
+}
+```
+
+- Um método utilizando transações ficaria da seguinte forma :
+
+```ts
+import { Inject, Injectable } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
+import { Sequelize } from 'sequelize';
+import { BusinessException } from 'src/core/exceptions/business-exception';
+import { UserResponseDto } from './dto/user-dto-response';
+import { UserDto } from './dto/user.dto';
+import { User } from './entities/user.entity';
+import { UsersRepository } from './users.repository';
+
+@Injectable()
+export class UsersService {
+  constructor(
+    private repository: UsersRepository,
+    @Inject('SEQUELIZE') private readonly sequelizeConnetion: Sequelize,
+  ) {
+    public async create(dto: UserDto): Promise<User> {
+      const transaction = await this.sequelize.transaction();
+
+      try {
+        const userExist = await this.userExist(dto.username);
+
+        if (userExist) {
+          throw new BusinessException("O usuário já está cadastrado");
+        }
+
+        const user = new User(dto);
+
+        user.password = await this.hashPassword(dto.password);
+
+        const userInsert = await this.repository.create(user);
+
+        await transaction.commit();
+
+        return userInsert;
+
+      } catch (error) {
+        await transaction.rollback();
+        throw new BusinessException(error);
+      }
+    }
   }
 }
 ```
