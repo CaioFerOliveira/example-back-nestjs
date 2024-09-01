@@ -2,10 +2,10 @@ import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { JwtModule, JwtSignOptions } from "@nestjs/jwt";
 import config from "config/config";
+import { DatabaseModule } from './database/database.module';
 import { AuthModule } from "./modules/auth/auth.module";
 import { AuthService } from "./modules/auth/auth.service";
 import { UsersModule } from "./modules/users/users.module";
-import { DatabaseModule } from './database/database.module';
 
 
 

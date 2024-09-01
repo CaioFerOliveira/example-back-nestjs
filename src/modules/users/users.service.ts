@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
+import { Sequelize } from 'sequelize';
 import { BusinessException } from 'src/core/exceptions/business-exception';
 import { UserResponseDto } from './dto/user-dto-response';
 import { UserDto } from './dto/user.dto';
@@ -8,20 +9,36 @@ import { UsersRepository } from './users.repository';
 
 @Injectable()
 export class UsersService {
-  constructor(private repository: UsersRepository) { }
+  constructor(private repository: UsersRepository,
+    @Inject('SEQUELIZE') private readonly sequelize: Sequelize,
+  ) { }
 
   public async create(dto: UserDto): Promise<User> {
-    const userExist = await this.userExist(dto.username);
+    const transaction = await this.sequelize.transaction();
 
-    if (userExist) {
-      throw new BusinessException("O usuário já está cadastrado");
+    try {
+
+      const userExist = await this.userExist(dto.username);
+
+      if (userExist) {
+        throw new BusinessException("O usuário já está cadastrado");
+      }
+
+      const user = new User(dto);
+
+      user.password = await this.hashPassword(dto.password);
+
+      const userInsert = await this.repository.create(user);
+
+      await transaction.commit();
+
+      return userInsert;
+
+    } catch (error) {
+      await transaction.rollback();
+      throw new BusinessException(error);
     }
 
-    const user = new User(dto);
-
-    user.password = await this.hashPassword(dto.password);
-
-    return await this.repository.create(user);
   }
 
   public async findById(id: number): Promise<UserResponseDto> {
