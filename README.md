@@ -788,6 +788,241 @@ export class UsersService {
 }
 ```
 
+#### Criando sua primeira migration
+
+- Para criar sua primeiro migration, crie um aruqivo **.sequelizerc** na raiz do seu projeto
+
+```ts
+const path = require('path');
+require('ts-node/register');
+
+module.exports = {
+  config: path.resolve('src/database', 'config.js'),
+  'migrations-path': path.resolve('src/database', 'migrations'),
+  'seeders-path': path.resolve('src/database', 'seeders'),
+};
+```
+
+- Esse arquivo mostra pro sequelize em que diretórios estarão os arquivos utilizados nos comando do sequelize-cli.
+
+- No diretório '/src/database' crie um novo arquivos **config.js** com o código a seguir:
+
+```js
+const { db } = require('../../config/config');
+const config = {
+  development: {
+    dialect: db.dialect,
+    url: db.url,
+  },
+};
+
+module.exports = config;
+```
+
+- No mesmo diretório crie um pasta chamada **migrations**.
+
+- Para criar sua primeira migration execute o comando em um shell de comandos:
+
+```bash
+$ npx sequelize-cli migration:generate --name create-user-table
+```
+
+- O arquivo gerado estará nese formato:
+
+```ts
+'use strict';
+
+/** @type {import('sequelize-cli').Migration} */
+module.exports = {
+  async up(queryInterface, Sequelize) {
+    /**
+     * Add altering commands here.
+     *
+     * Example:
+     * await queryInterface.createTable('users', { id: Sequelize.INTEGER });
+     */
+  },
+
+  async down(queryInterface, Sequelize) {
+    /**
+     * Add reverting commands here.
+     *
+     * Example:
+     * await queryInterface.dropTable('users');
+     */
+  },
+};
+```
+
+- Subistitua o código no arquivo da migration criada pelo a seguir, e altero a extensão do arquivo de .js para .ts:
+
+```ts
+'use strict';
+
+import { DataTypes } from 'sequelize';
+
+module.exports = {
+  async up(queryInterface, Sequelize) {
+    await queryInterface.createTable('users', {
+      id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        autoIncrement: true,
+        unique: true,
+        primaryKey: true,
+      },
+      username: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      password: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      name: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      email: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: true,
+      },
+      createdAt: {
+        type: DataTypes.DATE,
+        allowNull: false,
+        defaultValue: DataTypes.NOW,
+      },
+      updatedAt: {
+        type: DataTypes.DATE,
+        allowNull: false,
+        defaultValue: DataTypes.NOW,
+      },
+    });
+  },
+
+  async down(queryInterface, Sequelize) {
+    await queryInterface.dropTable('users');
+  },
+};
+```
+
+- As migrations são compostas por um método de **up** que é a execução das alterções desejadas e um método de **down**
+  que é o processo de "desfazer" as alterações do método de up.
+
+- Para executar a migration é necessário executar o comando:
+
+```bash
+$ npx sequelize-cli db:migrate
+```
+
+- Deste modo as migrations ainda não executadas no diretório 'src/database/migrations' serão executadas.
+
+- O Sequelize cria uma tabela no banco de dados que armazenas um histórico das migrations já executadas, verifique em
+  seu banco se a tabela SequelizeMeta foi criada, em caso positivo se há o registro da execução da sua primeria migration.
+
+- **OBS**: Remova a função que sincroniza seus modelos com os dados no banco do arquivo **database.providers.ts**, para
+  evitar que as tabelas sejam criadas duas vezes
+
+```ts
+import { ConfigService } from '@nestjs/config';
+import { Dialect } from 'sequelize';
+import { Sequelize } from 'sequelize-typescript';
+import { User } from 'src/modules/users/entities/user.entity';
+
+export const databaseProviders = [
+    {
+        provide: 'SEQUELIZE',
+        useFactory: async (configService: ConfigService) => {
+            const sequelize = new Sequelize(
+                configService.get<string>('db.url'),
+                {
+                    host: configService.get<string>('db.host'),
+                    database: configService.get<string>('db.database'),
+                    username: configService.get<string>('db.username'),
+                    password: configService.get<string>('db.password'),
+                    dialect: configService.get<string>('db.dialect') as Dialect,
+                }
+            );
+            sequelize.addModels([User]);
+            await sequelize.sync(); <---------
+            return sequelize;
+        },
+        inject: [ConfigService],
+    },
+];
+```
+
+#### Criando seu primeiro SEEDER
+
+- No diretório 'src/database' cria uma pasta chamada **seeders**, e então execute o código a seguir:
+
+```bash
+$ npx sequelize-cli seed:generate --name demo-users
+```
+
+- A execução deste comando cria um arquivo neste formato no diretório apontado no arquivo **.sequelizerc**:
+
+```ts
+/** @type {import('sequelize-cli').Migration} */
+module.exports = {
+  async up(queryInterface, Sequelize) {
+    /**
+     * Add seed commands here.
+     *
+     * Example:
+     * await queryInterface.bulkInsert('People', [{
+     *   name: 'John Doe',
+     *   isBetaMember: false
+     * }], {});
+     */
+  },
+
+  async down(queryInterface, Sequelize) {
+    /**
+     * Add commands to revert seed here.
+     *
+     * Example:
+     * await queryInterface.bulkDelete('People', null, {});
+     */
+  },
+};
+```
+
+- Substitua o código no novo arquivo pelo código a seguir, e substitua a extensão do arquivo de .js para .ts:
+
+```ts
+'use strict';
+
+/** @type {import('sequelize-cli').Migration} */
+module.exports = {
+  up: (queryInterface, Sequelize) => {
+    return queryInterface.bulkInsert('users', [
+      {
+        username: 'admin',
+        password:
+          '$2b$10$GLEjc.GosJ2xNQoYM8GMhO42jwMB9yEUmPtIV3DQMr6Cfmwdzbc6m',
+        name: 'Administrador Jg',
+        email: 'email@email.com',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ]);
+  },
+  async down(queryInterface, Sequelize) {
+    return queryInterface.bulkDelete('users', null, {});
+  },
+};
+```
+
+- Para executar os seeders armazenados no diretório 'src/database/seeders' execute o comando a seguir:
+
+```bash
+$ npx sequelize-cli db:seed:all
+```
+
+- Verifique no banco, se na tabela usuário uma linha contendo o usuário admin foi criada!
+
 ### Hashing
 
 - Em alguns momentos será necessário realizar aplicar um algoritmo de hash em informações sensíveis, para isso
