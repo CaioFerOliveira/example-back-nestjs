@@ -1,9 +1,11 @@
+
 export const db = {
     client: process.env.CLIENT || 'pg',
+    dialect: process.env.DIALICT || 'postegres',
     user: process.env.DATABASE_USER || 'docker',
     password: process.env.DATABASE_PASSWORD || 'docker',
     host: process.env.HOST || 'localhost',
-    port: process.env.PORT || '5442',
+    port: Number(process.env.PORT) || 5442,
     database: process.env.DATABASE || 'postgres',
     url: process.env.DATABASE_URL || "postgresql://docker:docker@localhost:5442/postgres?schema=public"
 }
